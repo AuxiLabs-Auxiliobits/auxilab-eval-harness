@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>auxilab-eval — {{ report.agent_name }} — {{ report.run_id }}</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --panel: #ffffff;
+    --text: #1f2330;
+    --muted: #6b7280;
+    --accent: #2c7a4d;
+    --danger: #d4654c;
+    --warning: #d4a44c;
+    --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.45;
+  }
+  header {
+    background: linear-gradient(135deg, #1f2330, #2c3a5c);
+    color: white;
+    padding: 28px 40px;
+  }
+  header h1 { margin: 0 0 6px 0; font-size: 24px; }
+  header .meta { color: #c7cad3; font-size: 13px; }
+  main { padding: 32px 40px; max-width: 1200px; margin: 0 auto; }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .stat .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--muted);
+    letter-spacing: 0.6px;
+  }
+  .stat .value {
+    font-size: 28px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .stat.pass .value { color: var(--accent); }
+  .stat.fail .value { color: var(--danger); }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 22px;
+  }
+  .panel h2 { margin: 0 0 12px 0; font-size: 17px; }
+  .charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 18px;
+  }
+  .charts img { width: 100%; border-radius: 6px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th { background: #f1f3f6; font-weight: 600; }
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .pill.pass { background: #d6efe0; color: #1e5b39; }
+  .pill.fail { background: #fadcd2; color: #8a3c2a; }
+  .pill.failure-type {
+    background: #fff1d6; color: #7a5a1a; margin-left: 4px;
+  }
+  details {
+    border-top: 1px solid var(--border);
+    padding: 10px 0;
+  }
+  details summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text);
+    font-size: 14px;
+  }
+  details[open] summary { color: var(--accent); }
+  pre {
+    background: #0f1117;
+    color: #e3e6ee;
+    padding: 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .case-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 10px;
+  }
+  .case-grid > div h4 {
+    margin: 0 0 6px 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+  .evaluator-row {
+    display: grid;
+    grid-template-columns: 200px 80px 80px 1fr;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 12px;
+  }
+  .evaluator-row .name { font-weight: 600; }
+  .badge { font-family: monospace; }
+  .judge-rationale {
+    background: #f8f5ee;
+    border-left: 3px solid var(--warning);
+    padding: 8px 12px;
+    margin: 6px 0;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    padding: 24px 40px 32px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Evaluation Report — {{ report.agent_name }}</h1>
+  <div class="meta">
+    Run <code>{{ report.run_id }}</code> ·
+    Started {{ report.started_at.strftime('%Y-%m-%d %H:%M:%S UTC') }} ·
+    Finished {{ report.finished_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+  </div>
+</header>
+
+<main>
+  <section class="summary-grid">
+    <div class="stat"><div class="label">Total cases</div><div class="value">{{ report.total }}</div></div>
+    <div class="stat pass"><div class="label">Passed</div><div class="value">{{ report.passed }}</div></div>
+    <div class="stat fail"><div class="label">Failed</div><div class="value">{{ report.failed }}</div></div>
+    <div class="stat"><div class="label">Pass rate</div><div class="value">{{ report.pass_rate | pct }}</div></div>
+    <div class="stat"><div class="label">Avg score</div><div class="value">{{ report.average_score | score }}</div></div>
+  </section>
+
+  {% if score_chart or failure_chart or history_chart %}
+  <section class="panel">
+    <h2>Charts</h2>
+    <div class="charts">
+      {% if score_chart %}
+      <img src="data:image/png;base64,{{ score_chart }}" alt="Score per test case" />
+      {% endif %}
+      {% if failure_chart %}
+      <img src="data:image/png;base64,{{ failure_chart }}" alt="Failure type distribution" />
+      {% endif %}
+      {% if history_chart %}
+      <img src="data:image/png;base64,{{ history_chart }}" alt="Pass rate trend" />
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="panel">
+    <h2>Test cases</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 130px;">ID</th>
+          <th>Description</th>
+          <th style="width: 70px;">Status</th>
+          <th style="width: 70px;">Score</th>
+          <th style="width: 90px;">Time</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in report.results %}
+        <tr>
+          <td><code>{{ r.test_case.id }}</code></td>
+          <td>
+            {{ r.test_case.description or "" }}
+            {% if r.failure_report %}
+              <span class="pill failure-type">{{ r.failure_report.failure_type }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if r.passed %}
+              <span class="pill pass">PASS</span>
+            {% else %}
+              <span class="pill fail">FAIL</span>
+            {% endif %}
+          </td>
+          <td class="badge">{{ r.score | score }}</td>
+          <td class="badge">{{ "%.0f" | format(r.runner_result.duration_ms) }} ms</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>Detailed results</h2>
+    {% for r in report.results %}
+    <details {% if not r.passed %}open{% endif %}>
+      <summary>
+        {% if r.passed %}
+          <span class="pill pass">PASS</span>
+        {% else %}
+          <span class="pill fail">FAIL</span>
+        {% endif %}
+        &nbsp;<code>{{ r.test_case.id }}</code> — {{ r.test_case.description or "" }}
+        &nbsp;<span class="badge">score {{ r.score | score }}</span>
+      </summary>
+
+      <div class="case-grid">
+        <div>
+          <h4>Input</h4>
+          <pre>{{ r.test_case.input | pretty_json }}</pre>
+        </div>
+        <div>
+          <h4>Expected</h4>
+          <pre>{{ r.test_case.expected | pretty_json }}</pre>
+        </div>
+        <div>
+          <h4>Actual output</h4>
+          <pre>{{ r.runner_result.output | pretty_json }}</pre>
+        </div>
+        <div>
+          <h4>Runner</h4>
+          <pre>duration: {{ "%.0f" | format(r.runner_result.duration_ms) }} ms
+error:    {{ r.runner_result.error or "—" }}</pre>
+        </div>
+      </div>
+
+      <h4 style="margin-top:14px;">Evaluators</h4>
+      {% for ev in r.evaluator_results %}
+      <div class="evaluator-row">
+        <div class="name">{{ ev.evaluator }}</div>
+        <div>
+          {% if ev.passed %}
+            <span class="pill pass">PASS</span>
+          {% else %}
+            <span class="pill fail">FAIL</span>
+          {% endif %}
+        </div>
+        <div class="badge">{{ ev.score | score }}</div>
+        <div>
+          {{ ev.detail }}
+          {% if ev.evaluator.startswith("llm_judge") and ev.breakdown.criteria %}
+            {% for crit, info in ev.breakdown.criteria.items() %}
+              <div class="judge-rationale">
+                <strong>{{ crit }}</strong> — {{ info.score | score }}
+                ({{ "%.0f" | format(info.weight * 100) }}%)
+                <br/>{{ info.rationale }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+
+      {% if r.failure_report %}
+      <h4 style="margin-top:14px;">Failure analysis</h4>
+      <div class="judge-rationale">
+        <strong>{{ r.failure_report.failure_type }}</strong>
+        (confidence {{ r.failure_report.confidence | score }})
+        <br/>{{ r.failure_report.summary }}
+        {% if r.failure_report.evidence %}
+        <ul>
+        {% for e in r.failure_report.evidence %}
+          <li>{{ e }}</li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        {% if r.failure_report.error %}
+        <em>Note: {{ r.failure_report.error }}</em>
+        {% endif %}
+      </div>
+      {% endif %}
+    </details>
+    {% endfor %}
+  </section>
+</main>
+
+<footer>
+  Generated by <a href="https://github.com/AuxiLabs-Auxiliobits/auxilab-eval-harness">auxilab-eval-harness</a>
+</footer>
+</body>
+</html>

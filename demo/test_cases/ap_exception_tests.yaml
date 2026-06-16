@@ -1,0 +1,229 @@
+# 10 test cases for the AP Exception Handling Agent.
+# Run with:
+#   auxilab-eval run --tests demo/test_cases/ap_exception_tests.yaml \
+#       --agent demo.ap_exception_agent:handle_ap_exception \
+#       --html report.html
+
+- id: ap_001_duplicate_invoice
+  description: A flagged duplicate must be blocked from payment.
+  tags: [duplicate, hot-path]
+  input:
+    invoice_id: INV-1001
+    amount: 1500.00
+    vendor: Acme Corp
+    po_number: PO-77
+    due_date: "2026-08-30"
+    duplicate_of: INV-0987
+  expected:
+    decision: flag_duplicate
+    exception_type: DuplicateInvoice
+  evaluators:
+    - type: exact
+      field: decision
+    - type: exact
+      field: exception_type
+    - type: regex
+      field: reason
+      pattern: "(?i)duplicate"
+
+- id: ap_002_unknown_vendor
+  description: Vendor not in master file should require onboarding.
+  tags: [vendor]
+  input:
+    invoice_id: INV-1002
+    amount: 850.00
+    vendor: Sketchy Vendor LLC
+    po_number: PO-99
+    due_date: "2026-09-15"
+  expected:
+    decision: needs_review
+    exception_type: UnknownVendor
+  evaluators:
+    - type: exact
+      field: decision
+    - type: exact
+      field: exception_type
+    - type: regex
+      field: reason
+      pattern: "(?i)(vendor|onboard|approved.*file)"
+
+- id: ap_003_missing_po
+  description: Material spend without a PO must be queued for review.
+  tags: [po, three-way-match]
+  input:
+    invoice_id: INV-1003
+    amount: 5000.00
+    vendor: Globex Inc
+    po_number: null
+    due_date: "2026-09-20"
+  expected:
+    decision: needs_review
+    exception_type: MissingPO
+  evaluators:
+    - type: exact
+      field: decision
+    - type: exact
+      field: exception_type
+    - type: regex
+      field: next_action
+      pattern: "(?i)PO|requisition"
+
+- id: ap_004_clean_approval
+  description: Small, well-formed invoice from a known vendor should auto-approve.
+  tags: [happy-path]
+  input:
+    invoice_id: INV-1004
+    amount: 250.00
+    vendor: Initech
+    po_number: PO-15
+    due_date: "2026-12-01"
+  expected:
+    decision: approve
+    exception_type: "None"
+  evaluators:
+    - type: exact
+      field: decision
+    - type: exact
+      field: exception_type
+
+- id: ap_005_over_threshold
+  description: Large invoices above the threshold need manager sign-off.
+  tags: [threshold, manager-review]
+  input:
+    invoice_id: INV-1005
+    amount: 25000.00
+    vendor: Stark Industries
+    po_number: PO-220
+    due_date: "2026-11-05"
+  expected:
+    decision: needs_review
+    exception_type: OverThreshold
+  evaluators:
+    - type: exact
+      field: decision
+    - type: exact
+      field: exception_type
+    - type: regex
+      field: reason
+      pattern: "(?i)threshold|exceed"
+
+- id: ap_006_past_due
+  description: Past-due invoices should be flagged for late-fee escalation.
+  tags: [past-due]
+  input:
+    invoice_id: INV-1006
+    amount: 600.00
+    vendor: Hooli
+    po_number: PO-12
+    due_date: "2025-01-15"
+  expected:
+    decision: needs_review
+    exception_type: PastDue
+  evaluators:
+    - type: exact
+      field: decision
+    - type: exact
+      field: exception_type
+    - type: regex
+      field: reason
+      pattern: "(?i)past|late|due"
+
+- id: ap_007_invalid_payload
+  description: Empty vendor + zero amount must be rejected outright.
+  tags: [validation]
+  input:
+    invoice_id: INV-1007
+    amount: 0
+    vendor: ""
+    po_number: PO-1
+    due_date: "2026-10-10"
+  expected:
+    decision: reject
+    exception_type: InvalidPayload
+  evaluators:
+    - type: exact
+      field: decision
+    - type: exact
+      field: exception_type
+
+- id: ap_008_output_schema
+  description: The agent's response must conform to the documented JSON schema.
+  tags: [schema, contract]
+  input:
+    invoice_id: INV-1008
+    amount: 1200.00
+    vendor: Umbrella Logistics
+    po_number: PO-450
+    due_date: "2026-11-25"
+  expected: {}
+  evaluators:
+    - type: json_schema
+      schema:
+        type: object
+        required: [decision, reason, exception_type, next_action, confidence]
+        properties:
+          decision:
+            type: string
+            enum: [approve, flag_duplicate, needs_review, reject]
+          reason: { type: string, minLength: 5 }
+          exception_type: { type: string }
+          next_action: { type: string, minLength: 5 }
+          confidence:
+            type: number
+            minimum: 0
+            maximum: 1
+
+- id: ap_009_semantic_explanation
+  description: Reason text must semantically match the expected explanation.
+  tags: [semantic, explanation]
+  input:
+    invoice_id: INV-1009
+    amount: 1500.00
+    vendor: Acme Corp
+    po_number: PO-77
+    due_date: "2026-08-30"
+    duplicate_of: INV-0987
+  expected:
+    reason: This invoice is a duplicate submission and should not be paid again.
+  evaluators:
+    - type: exact
+      field: decision
+      expected: flag_duplicate
+    - type: semantic
+      field: reason
+      threshold: 0.55
+
+- id: ap_010_llm_judge_quality
+  description: LLM-as-judge scoring of professionalism and accuracy.
+  tags: [llm-judge, quality]
+  input:
+    invoice_id: INV-1010
+    amount: 7500.00
+    vendor: Globex Inc
+    po_number: null
+    due_date: "2026-12-05"
+  expected:
+    decision: needs_review
+    exception_type: MissingPO
+  pass_threshold: 0.7
+  evaluators:
+    - type: exact
+      field: decision
+      weight: 1.0
+    - type: llm_judge
+      threshold: 0.7
+      weight: 1.0
+      rubric:
+        criteria:
+          correctness: >
+            Did the agent correctly identify the missing PO as the exception
+            and route it for review?
+          professionalism: >
+            Is the explanation written in clear, concise, professional
+            language suitable for an internal AP team?
+          actionability: >
+            Does the next_action describe a specific, executable next step?
+        weights:
+          correctness: 0.5
+          professionalism: 0.2
+          actionability: 0.3
