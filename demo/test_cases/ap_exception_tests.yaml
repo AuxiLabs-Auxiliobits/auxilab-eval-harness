@@ -1,4 +1,5 @@
-# 10 test cases for the AP Exception Handling Agent.
+# 20+ comprehensive test cases for the AP Exception Handling Agent.
+# Covers: duplicates, vendor validation, POs, amounts, dates, schema validation, semantic accuracy
 # Run with:
 #   auxilab-eval run --tests demo/test_cases/ap_exception_tests.yaml \
 #       --agent demo.ap_exception_agent:handle_ap_exception \
@@ -6,7 +7,7 @@
 
 - id: ap_001_duplicate_invoice
   description: A flagged duplicate must be blocked from payment.
-  tags: [duplicate, hot-path]
+  tags: [duplicate, hot-path, critical]
   input:
     invoice_id: INV-1001
     amount: 1500.00
@@ -20,15 +21,18 @@
   evaluators:
     - type: exact
       field: decision
+      weight: 1.0
     - type: exact
       field: exception_type
+      weight: 1.0
     - type: regex
       field: reason
       pattern: "(?i)duplicate"
+      weight: 0.5
 
 - id: ap_002_unknown_vendor
   description: Vendor not in master file should require onboarding.
-  tags: [vendor]
+  tags: [vendor, validation, compliance]
   input:
     invoice_id: INV-1002
     amount: 850.00
@@ -49,7 +53,7 @@
 
 - id: ap_003_missing_po
   description: Material spend without a PO must be queued for review.
-  tags: [po, three-way-match]
+  tags: [po, three-way-match, critical]
   input:
     invoice_id: INV-1003
     amount: 5000.00
@@ -70,7 +74,7 @@
 
 - id: ap_004_clean_approval
   description: Small, well-formed invoice from a known vendor should auto-approve.
-  tags: [happy-path]
+  tags: [happy-path, baseline]
   input:
     invoice_id: INV-1004
     amount: 250.00
@@ -85,10 +89,13 @@
       field: decision
     - type: exact
       field: exception_type
+    - type: regex
+      field: confidence
+      pattern: "0\\.[8-9]|1\\.0"
 
 - id: ap_005_over_threshold
-  description: Large invoices above the threshold need manager sign-off.
-  tags: [threshold, manager-review]
+  description: Large invoices above threshold need manager sign-off (business rule).
+  tags: [threshold, manager-review, business-logic]
   input:
     invoice_id: INV-1005
     amount: 25000.00
@@ -105,11 +112,11 @@
       field: exception_type
     - type: regex
       field: reason
-      pattern: "(?i)threshold|exceed"
+      pattern: "(?i)threshold|exceed|10000|approval"
 
 - id: ap_006_past_due
-  description: Past-due invoices should be flagged for late-fee escalation.
-  tags: [past-due]
+  description: Past-due invoices should be flagged for escalation.
+  tags: [past-due, urgency]
   input:
     invoice_id: INV-1006
     amount: 600.00
@@ -128,9 +135,9 @@
       field: reason
       pattern: "(?i)past|late|due"
 
-- id: ap_007_invalid_payload
-  description: Empty vendor + zero amount must be rejected outright.
-  tags: [validation]
+- id: ap_007_invalid_payload_empty
+  description: Empty vendor + zero amount must be rejected outright (validation).
+  tags: [validation, error-handling]
   input:
     invoice_id: INV-1007
     amount: 0
@@ -146,9 +153,9 @@
     - type: exact
       field: exception_type
 
-- id: ap_008_output_schema
-  description: The agent's response must conform to the documented JSON schema.
-  tags: [schema, contract]
+- id: ap_008_schema_validation
+  description: Response must conform to documented JSON schema (contract test).
+  tags: [schema, contract, non-functional]
   input:
     invoice_id: INV-1008
     amount: 1200.00
@@ -172,10 +179,11 @@
             type: number
             minimum: 0
             maximum: 1
+      weight: 1.0
 
 - id: ap_009_semantic_explanation
-  description: Reason text must semantically match the expected explanation.
-  tags: [semantic, explanation]
+  description: Duplicate detection explanation must align semantically with expectation.
+  tags: [semantic, explanation-quality]
   input:
     invoice_id: INV-1009
     amount: 1500.00
@@ -192,12 +200,93 @@
     - type: semantic
       field: reason
       threshold: 0.55
+      weight: 0.8
 
-- id: ap_010_llm_judge_quality
-  description: LLM-as-judge scoring of professionalism and accuracy.
-  tags: [llm-judge, quality]
+- id: ap_010_edge_case_negative_amount
+  description: Negative amount should be rejected as invalid.
+  tags: [edge-case, validation]
   input:
     invoice_id: INV-1010
+    amount: -500.00
+    vendor: Acme Corp
+    po_number: PO-100
+    due_date: "2026-10-01"
+  expected:
+    decision: reject
+    exception_type: InvalidPayload
+  evaluators:
+    - type: exact
+      field: decision
+
+- id: ap_011_po_empty_string
+  description: PO as empty string should be treated as missing for large amounts.
+  tags: [edge-case, po, three-way-match]
+  input:
+    invoice_id: INV-1011
+    amount: 3000.00
+    vendor: Globex Inc
+    po_number: ""
+    due_date: "2026-11-15"
+  expected:
+    decision: needs_review
+    exception_type: MissingPO
+  evaluators:
+    - type: exact
+      field: decision
+    - type: exact
+      field: exception_type
+
+- id: ap_012_future_due_date
+  description: Invoice with future due date should be approved normally.
+  tags: [happy-path, temporal]
+  input:
+    invoice_id: INV-1012
+    amount: 800.00
+    vendor: Initech
+    po_number: PO-88
+    due_date: "2027-06-30"
+  expected:
+    decision: approve
+  evaluators:
+    - type: exact
+      field: decision
+
+- id: ap_013_threshold_boundary
+  description: Amount exactly at threshold should trigger review (boundary test).
+  tags: [boundary, threshold]
+  input:
+    invoice_id: INV-1013
+    amount: 10000.00
+    vendor: Stark Industries
+    po_number: PO-999
+    due_date: "2026-11-01"
+  expected:
+    decision: needs_review
+    exception_type: OverThreshold
+  evaluators:
+    - type: exact
+      field: decision
+
+- id: ap_014_small_amount_precision
+  description: Small decimal amounts should be handled with precision.
+  tags: [precision, happy-path]
+  input:
+    invoice_id: INV-1014
+    amount: 0.99
+    vendor: Acme Corp
+    po_number: PO-5
+    due_date: "2026-12-15"
+  expected:
+    decision: approve
+  evaluators:
+    - type: exact
+      field: decision
+
+- id: ap_015_llm_judge_quality
+  description: LLM-as-judge scoring of professionalism and accuracy.
+  tags: [llm-judge, quality, reasoning]
+  input:
+    invoice_id: INV-1015
     amount: 7500.00
     vendor: Globex Inc
     po_number: null
@@ -216,14 +305,90 @@
       rubric:
         criteria:
           correctness: >
-            Did the agent correctly identify the missing PO as the exception
-            and route it for review?
+            Did the agent correctly identify the missing PO as the primary exception
+            and recommend review routing?
           professionalism: >
-            Is the explanation written in clear, concise, professional
-            language suitable for an internal AP team?
+            Is the explanation clear, concise, and professional for an AP team?
           actionability: >
-            Does the next_action describe a specific, executable next step?
+            Does next_action specify a concrete, executable next step?
         weights:
           correctness: 0.5
-          professionalism: 0.2
-          actionability: 0.3
+          professionalism: 0.25
+          actionability: 0.25
+
+- id: ap_016_vendor_case_sensitivity
+  description: Vendor name matching should be case-insensitive (known vendor).
+  tags: [vendor, case-insensitive]
+  input:
+    invoice_id: INV-1016
+    amount: 300.00
+    vendor: "acme corp"  # lowercase
+    po_number: PO-44
+    due_date: "2026-12-01"
+  expected:
+    decision: approve
+  evaluators:
+    - type: exact
+      field: decision
+
+- id: ap_017_whitespace_vendor
+  description: Vendor names with extra whitespace should be normalized.
+  tags: [vendor, normalization]
+  input:
+    invoice_id: INV-1017
+    amount: 400.00
+    vendor: "  Initech  "  # extra spaces
+    po_number: PO-55
+    due_date: "2026-12-01"
+  expected:
+    decision: approve
+  evaluators:
+    - type: exact
+      field: decision
+
+- id: ap_018_today_due_date
+  description: Invoice due today should be treated as on-time (not past-due).
+  tags: [temporal, boundary]
+  input:
+    invoice_id: INV-1018
+    amount: 500.00
+    vendor: Hooli
+    po_number: PO-77
+    due_date: "2026-06-28"  # Today's date
+  expected:
+    decision: approve
+  evaluators:
+    - type: exact
+      field: decision
+
+- id: ap_019_confidence_score_present
+  description: Agent must always return a confidence score.
+  tags: [contract, required-field]
+  input:
+    invoice_id: INV-1019
+    amount: 1000.00
+    vendor: Umbrella Logistics
+    po_number: PO-200
+    due_date: "2026-10-15"
+  expected: {}
+  evaluators:
+    - type: regex
+      field: confidence
+      pattern: "^0\\.[0-9]+$|^1\\.0$"
+
+- id: ap_020_all_vendors_approved
+  description: All known vendors (strategic/standard) should eventually reach approve or needs_review.
+  tags: [coverage, business-logic]
+  input:
+    invoice_id: INV-1020
+    amount: 450.00
+    vendor: Stark Industries  # Strategic vendor
+    po_number: PO-111
+    due_date: "2026-09-20"
+  expected:
+    decision: approve
+  evaluators:
+    - type: exact
+      field: decision
+      weight: 1.0
+

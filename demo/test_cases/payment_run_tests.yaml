@@ -1,7 +1,5 @@
-# 10 test cases for the Payment Run Agent (Brief #8).
-# This file is used to evaluate "another team's" submission — i.e. the same
-# harness pointed at a *different* agent in a *different* hackathon brief.
-#
+# 18 comprehensive test cases for the Payment Run Agent (Brief #8).
+# Covers: vendor tiers, fraud detection, cash constraints, timing, schema validation, edge cases
 # Run with:
 #   auxilab-eval run \
 #     --tests demo/test_cases/payment_run_tests.yaml \
@@ -10,7 +8,7 @@
 
 - id: pr_001_happy_path
   description: Clean standard-tier invoice should be scheduled on its due date.
-  tags: [happy-path]
+  tags: [happy-path, baseline]
   input:
     payment_id: PMT-0001
     invoice_id: INV-2001
@@ -31,8 +29,8 @@
       pattern: "(?i)scheduled|standard|terms"
 
 - id: pr_002_early_pay_discount
-  description: Early-pay discount before deadline → accelerate payment, high priority.
-  tags: [discount, working-capital]
+  description: Early-pay discount before deadline → accelerate payment with high priority.
+  tags: [discount, working-capital, business-logic]
   input:
     payment_id: PMT-0002
     invoice_id: INV-2002
@@ -51,15 +49,17 @@
   evaluators:
     - type: exact
       field: decision
+      weight: 1.0
     - type: exact
       field: priority
+      weight: 1.0
     - type: regex
       field: reason
       pattern: "(?i)discount|saving"
 
 - id: pr_003_past_due_high_priority
   description: Past-due invoices must be paid immediately with HIGH priority.
-  tags: [past-due, sla]
+  tags: [past-due, sla, critical]
   input:
     payment_id: PMT-0003
     invoice_id: INV-2003
@@ -83,8 +83,8 @@
       pattern: "(?i)past due|late"
 
 - id: pr_004_watchlist_hold
-  description: Watchlist vendor should be HELD for treasury review, never auto-paid.
-  tags: [watchlist, security]
+  description: Watchlist vendor must be HELD for treasury review, never auto-paid.
+  tags: [watchlist, security, compliance]
   input:
     payment_id: PMT-0004
     invoice_id: INV-2004
@@ -106,9 +106,9 @@
 
 - id: pr_005_watchlist_small_amount_security
   description: |
-    Security-critical edge case. A small payment to a watchlist vendor must
-    STILL be held — small-amount bypass is a textbook fraud loophole.
-  tags: [watchlist, security, regression]
+    SECURITY-CRITICAL. Small payment to watchlist vendor must STILL be held.
+    Small-amount bypass is a classic fraud loophole. This is a regression test.
+  tags: [watchlist, security, regression, critical]
   input:
     payment_id: PMT-0005
     invoice_id: INV-2005
@@ -124,10 +124,11 @@
   evaluators:
     - type: exact
       field: decision
+      weight: 1.0
 
-- id: pr_006_fraud_reject
-  description: Fraud score above threshold must reject the payment.
-  tags: [fraud, security]
+- id: pr_006_fraud_high_score
+  description: Fraud score above threshold (>0.7) must reject the payment immediately.
+  tags: [fraud, security, critical]
   input:
     payment_id: PMT-0006
     invoice_id: INV-2006
@@ -153,10 +154,9 @@
 
 - id: pr_007_cash_constraint_split
   description: |
-    When the invoice exceeds remaining cash headroom, split the payment.
-    The output must also conform to the documented schema (amount_to_pay
-    must be a NUMBER, not a string).
-  tags: [cash, schema, treasury]
+    When invoice exceeds remaining cash headroom, SPLIT the payment.
+    CRITICAL: amount_to_pay must be NUMBER, not STRING (schema violation test).
+  tags: [cash, schema, treasury, critical]
   input:
     payment_id: PMT-0007
     invoice_id: INV-2007
@@ -172,21 +172,23 @@
   evaluators:
     - type: exact
       field: decision
+      weight: 0.8
     - type: json_schema
+      weight: 1.0
       schema:
         type: object
         required: [decision, scheduled_date, amount_to_pay, reason, priority, confidence]
         properties:
           decision: { type: string }
           scheduled_date: { type: string }
-          amount_to_pay: { type: number }
+          amount_to_pay: { type: number }  # Must be number, not string!
           reason: { type: string, minLength: 5 }
           priority: { type: string, enum: [high, medium, low] }
           confidence: { type: number, minimum: 0, maximum: 1 }
 
-- id: pr_008_strategic_vendor
-  description: Strategic vendor should be paid on the due date with high priority.
-  tags: [vendor-tier, strategic]
+- id: pr_008_strategic_vendor_payment
+  description: Strategic vendor should be paid on due date with high priority.
+  tags: [vendor-tier, strategic, business-logic]
   input:
     payment_id: PMT-0008
     invoice_id: INV-2008
@@ -209,11 +211,11 @@
       field: reason
       pattern: "(?i)strategic"
 
-- id: pr_009_output_schema_contract
+- id: pr_009_schema_contract
   description: |
-    Every output, regardless of branch, must satisfy the documented JSON
-    schema for downstream ERP integration.
-  tags: [schema, contract]
+    Every output must satisfy the documented JSON schema for ERP integration.
+    This is a contract test for downstream compatibility.
+  tags: [schema, contract, non-functional]
   input:
     payment_id: PMT-0009
     invoice_id: INV-2009
@@ -227,6 +229,7 @@
   expected: {}
   evaluators:
     - type: json_schema
+      weight: 1.0
       schema:
         type: object
         required: [decision, scheduled_date, amount_to_pay, reason, priority, confidence]
@@ -245,12 +248,11 @@
             minimum: 0
             maximum: 1
 
-- id: pr_010_llm_judge_reasoning_quality
+- id: pr_010_llm_judge_strategic_reasoning
   description: |
-    LLM-as-judge scores the reasoning quality on a strategic-vendor payment.
-    Tests not just correctness, but professionalism and actionability of
-    the decision rationale.
-  tags: [llm-judge, quality]
+    LLM-as-judge scores reasoning quality on strategic vendor payment.
+    Tests correctness, professionalism, and actionability.
+  tags: [llm-judge, quality, reasoning]
   input:
     payment_id: PMT-0010
     invoice_id: INV-2010
@@ -274,15 +276,170 @@
       rubric:
         criteria:
           correctness: >
-            Did the agent correctly identify the vendor as strategic and
-            schedule pay_now with high priority?
+            Did the agent correctly identify strategic vendor and schedule pay_now?
           professionalism: >
-            Is the reason field written in clear, concise, professional
-            language suitable for a treasury team?
+            Is the reason field clear and professional for a treasury team?
           actionability: >
-            Does the reason / scheduled_date combination give the treasury
-            team enough information to action the payment immediately?
+            Does the reason + scheduled_date enable immediate action?
         weights:
           correctness: 0.5
-          professionalism: 0.2
-          actionability: 0.3
+          professionalism: 0.25
+          actionability: 0.25
+
+- id: pr_011_zero_cash_defer
+  description: When no cash headroom, payment should be deferred.
+  tags: [cash, constraints]
+  input:
+    payment_id: PMT-0011
+    invoice_id: INV-2011
+    vendor: Initech
+    amount: 5000.00
+    currency: USD
+    due_date: "2026-10-01"
+    available_cash: 50000.00
+    batch_total_committed: 50000.00
+    vendor_tier: standard
+  expected:
+    decision: defer
+  evaluators:
+    - type: exact
+      field: decision
+
+- id: pr_012_fraud_boundary
+  description: Fraud score exactly at threshold (0.7) should still be processed normally.
+  tags: [fraud, boundary]
+  input:
+    payment_id: PMT-0012
+    invoice_id: INV-2012
+    vendor: Acme Corp
+    amount: 1000.00
+    currency: USD
+    due_date: "2026-10-10"
+    available_cash: 100000.00
+    batch_total_committed: 20000.00
+    vendor_tier: standard
+    fraud_score: 0.70
+  expected:
+    decision: pay_now
+  evaluators:
+    - type: exact
+      field: decision
+
+- id: pr_013_future_early_deadline
+  description: Early pay deadline in the future should trigger discount.
+  tags: [discount, future-date]
+  input:
+    payment_id: PMT-0013
+    invoice_id: INV-2013
+    vendor: Globex Inc
+    amount: 5000.00
+    currency: USD
+    due_date: "2026-12-01"
+    available_cash: 200000.00
+    batch_total_committed: 50000.00
+    vendor_tier: standard
+    early_pay_discount_pct: 1.5
+    early_pay_deadline: "2026-08-01"
+  expected:
+    decision: pay_now
+  evaluators:
+    - type: exact
+      field: decision
+
+- id: pr_014_edge_case_zero_amount
+  description: Zero amount should be handled gracefully.
+  tags: [edge-case, validation]
+  input:
+    payment_id: PMT-0014
+    invoice_id: INV-2014
+    vendor: Acme Corp
+    amount: 0.00
+    currency: USD
+    due_date: "2026-10-01"
+    available_cash: 100000.00
+    batch_total_committed: 20000.00
+    vendor_tier: standard
+  expected: {}
+  evaluators:
+    - type: regex
+      field: decision
+      pattern: "pay_now|defer|hold"
+
+- id: pr_015_precision_currency_conversion
+  description: Decimal amounts should maintain precision through split logic.
+  tags: [precision, treasury]
+  input:
+    payment_id: PMT-0015
+    invoice_id: INV-2015
+    vendor: Stark Industries
+    amount: 12345.67
+    currency: USD
+    due_date: "2026-10-15"
+    available_cash: 50000.00
+    batch_total_committed: 40000.00
+    vendor_tier: standard
+  expected:
+    decision: split_payment
+  evaluators:
+    - type: exact
+      field: decision
+
+- id: pr_016_confidence_score_always_present
+  description: Agent must always return a confidence score [0..1].
+  tags: [contract, required-field]
+  input:
+    payment_id: PMT-0016
+    invoice_id: INV-2016
+    vendor: Hooli
+    amount: 2500.00
+    currency: USD
+    due_date: "2026-11-01"
+    available_cash: 150000.00
+    batch_total_committed: 30000.00
+    vendor_tier: standard
+  expected: {}
+  evaluators:
+    - type: regex
+      field: confidence
+      pattern: "^0\\.[0-9]+$|^1\\.0$"
+
+- id: pr_017_watchlist_boundary
+  description: Payment at exactly $100 to watchlist should still be held.
+  tags: [watchlist, boundary, security]
+  input:
+    payment_id: PMT-0017
+    invoice_id: INV-2017
+    vendor: Sketchy Holdings Ltd
+    amount: 100.00
+    currency: USD
+    due_date: "2026-10-01"
+    available_cash: 200000.00
+    batch_total_committed: 50000.00
+    vendor_tier: watchlist
+  expected:
+    decision: hold
+  evaluators:
+    - type: exact
+      field: decision
+
+- id: pr_018_priority_labeling_consistency
+  description: Past-due must have priority=high (regression for labeling bugs).
+  tags: [priority, past-due, regression]
+  input:
+    payment_id: PMT-0018
+    invoice_id: INV-2018
+    vendor: Initech
+    amount: 2000.00
+    currency: USD
+    due_date: "2025-06-01"
+    available_cash: 500000.00
+    batch_total_committed: 100000.00
+    vendor_tier: standard
+  expected:
+    decision: pay_now
+    priority: high
+  evaluators:
+    - type: exact
+      field: priority
+      weight: 1.0
+

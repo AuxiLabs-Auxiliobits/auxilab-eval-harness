@@ -29,6 +29,70 @@ from auxilab_eval import EvalHarness, HttpRunner, PythonRunner
 load_dotenv()
 
 
+def _format_summary(report) -> str:
+    """Format a rich CLI summary of the evaluation report."""
+    total = report.total
+    passed = report.passed
+    failed = report.failed
+    pass_rate = report.pass_rate
+    
+    # Color codes for terminal
+    GREEN = "\033[92m"
+    RED = "\033[91m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    BOLD = "\033[1m"
+    RESET = "\033[0m"
+    
+    output = [
+        "",
+        f"{BOLD}{BLUE}╔══════════════════════════════════════════╗{RESET}",
+        f"{BOLD}{BLUE}║  Evaluation Complete{' ' * 18}║{RESET}",
+        f"{BOLD}{BLUE}╚══════════════════════════════════════════╝{RESET}",
+        "",
+        f"  Agent:         {BOLD}{report.agent_name}{RESET}",
+        f"  Run ID:        {report.run_id}",
+        "",
+        f"  Results:",
+        f"    {GREEN}✓ Passed:{RESET:>8} {BOLD}{passed}{RESET}/{total}",
+        f"    {RED}✗ Failed:{RESET:>8} {BOLD}{failed}{RESET}/{total}",
+        f"    Pass Rate:  {BOLD}{pass_rate:.1%}{RESET}",
+        f"    Avg Score:  {BOLD}{report.average_score:.2f}{RESET}",
+        "",
+    ]
+    
+    # Show failure breakdown if there are failures
+    if failed > 0 and report.failure_distribution:
+        output.append("  Failure Breakdown:")
+        for failure_type, count in report.failure_distribution.items():
+            pct = (count / failed) * 100
+            output.append(f"    • {failure_type}: {count} ({pct:.0f}%)")
+        output.append("")
+    
+    # Performance metrics
+    if report.results:
+        avg_latency = sum(r.runner_result.duration_ms for r in report.results) / len(report.results)
+        min_latency = min(r.runner_result.duration_ms for r in report.results)
+        max_latency = max(r.runner_result.duration_ms for r in report.results)
+        
+        output.append("  Performance:")
+        output.append(f"    Avg Latency:  {avg_latency:.1f} ms")
+        output.append(f"    Min Latency:  {min_latency:.1f} ms")
+        output.append(f"    Max Latency:  {max_latency:.1f} ms")
+        output.append("")
+    
+    # Overall status
+    if pass_rate == 1.0:
+        output.append(f"  {GREEN}{BOLD}🎉 All tests passed!{RESET}")
+    elif pass_rate >= 0.75:
+        output.append(f"  {YELLOW}{BOLD}⚠️  Good performance, but some tests failed{RESET}")
+    else:
+        output.append(f"  {RED}{BOLD}❌ Multiple test failures - review needed{RESET}")
+    
+    output.append("")
+    return "\n".join(output)
+
+
 @click.group()
 @click.version_option(package_name="auxilab-eval")
 def main() -> None:
@@ -53,6 +117,9 @@ def main() -> None:
 @click.option("--json", "json_out", default=None,
               type=click.Path(dir_okay=False),
               help="Write a JSON report to this path.")
+@click.option("--csv", "csv_out", default=None,
+              type=click.Path(dir_okay=False),
+              help="Write a CSV export to this path.")
 @click.option("--no-llm", is_flag=True, default=False,
               help="Skip LLM-based failure analysis.")
 @click.option("--history-db", default=None, type=click.Path(dir_okay=False),
@@ -63,6 +130,7 @@ def run(
     http_url: Optional[str],
     html_out: Optional[str],
     json_out: Optional[str],
+    csv_out: Optional[str],
     no_llm: bool,
     history_db: Optional[str],
 ) -> None:
@@ -70,11 +138,19 @@ def run(
     if bool(agent_ref) == bool(http_url):
         raise click.UsageError("Provide exactly one of --agent or --http.")
 
+    click.echo("\n" + "=" * 50)
+    click.echo("  auxilab-eval — Starting evaluation")
+    click.echo("=" * 50 + "\n")
+    
     if agent_ref:
+        click.echo(f"  📦 Loading agent: {agent_ref}")
         runner = PythonRunner(_import_callable(agent_ref))
     else:
+        click.echo(f"  🌐 Using HTTP endpoint: {http_url}")
         runner = HttpRunner(http_url)  # type: ignore[arg-type]
 
+    click.echo(f"  📋 Loading test cases: {tests}\n")
+    
     db = history_db or os.getenv("AUXILAB_EVAL_DB")
     harness = EvalHarness(
         runner=runner,
@@ -82,15 +158,24 @@ def run(
         analyse_failures=not no_llm,
         history_db=db,
     )
+    
+    click.echo("  ⏱️  Running tests...\n")
     report = harness.run()
-    click.echo(report.summary())
+    
+    # Print rich summary
+    click.echo(_format_summary(report))
 
     if json_out:
         path = report.to_json(json_out)
-        click.echo(f"\nJSON report -> {path}")
+        click.echo(f"  📄 JSON report → {path}")
     if html_out:
         path = report.to_html(html_out)
-        click.echo(f"HTML report -> {path}")
+        click.echo(f"  🌐 HTML report → {path}")
+    if csv_out:
+        path = report.to_csv(csv_out)
+        click.echo(f"  📊 CSV export → {path}")
+    
+    click.echo("")
 
     sys.exit(0 if report.failed == 0 else 1)
 
@@ -119,14 +204,34 @@ def history(db: Optional[str], agent: Optional[str], limit: int) -> None:
 
     runs = HistoryStore(db_path).history(agent_name=agent, limit=limit)
     if not runs:
-        click.echo("No runs recorded.")
+        click.echo("📭 No runs recorded.")
         return
-    click.echo(f"{'started_at':<27} {'agent':<22} {'pass':<6} {'rate':<6} run_id")
+    
+    click.echo("\n" + "=" * 80)
+    click.echo("  Run History")
+    click.echo("=" * 80 + "\n")
+    
+    click.echo(f"{'Started':<27} {'Agent':<25} {'Pass':<8} {'Rate':<8} {'Run ID':<36}")
+    click.echo("-" * 104)
+    
     for r in runs:
+        rate_pct = f"{r.pass_rate*100:5.1f}%"
+        pass_str = f"{r.passed}/{r.total}"
+        
+        # Color code the pass rate
+        if r.pass_rate == 1.0:
+            rate_display = f"\033[92m{rate_pct}\033[0m"
+        elif r.pass_rate >= 0.75:
+            rate_display = f"\033[93m{rate_pct}\033[0m"
+        else:
+            rate_display = f"\033[91m{rate_pct}\033[0m"
+        
         click.echo(
-            f"{r.started_at:<27} {r.agent_name[:22]:<22} "
-            f"{r.passed}/{r.total:<4} {r.pass_rate*100:5.1f}% {r.run_id}"
+            f"{r.started_at:<27} {r.agent_name[:25]:<25} {pass_str:<8} "
+            f"{rate_display:<8} {r.run_id}"
         )
+    
+    click.echo("\n")
 
 
 # ---------------------------------------------------------------------------

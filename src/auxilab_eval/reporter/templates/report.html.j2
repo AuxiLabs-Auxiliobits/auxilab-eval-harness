@@ -2,17 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>auxilab-eval — {{ report.agent_name }} — {{ report.run_id }}</title>
 <style>
   :root {
-    --bg: #f7f7f5;
+    --bg: #f8f9fa;
     --panel: #ffffff;
     --text: #1f2330;
     --muted: #6b7280;
-    --accent: #2c7a4d;
-    --danger: #d4654c;
-    --warning: #d4a44c;
+    --accent: #10b981;
+    --accent-light: #d1fae5;
+    --danger: #ef4444;
+    --danger-light: #fee2e2;
+    --warning: #f59e0b;
+    --warning-light: #fef3c7;
     --border: #e5e7eb;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
   }
   * { box-sizing: border-box; }
   body {
@@ -20,161 +26,378 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background: var(--bg);
     color: var(--text);
-    line-height: 1.45;
+    line-height: 1.6;
   }
   header {
-    background: linear-gradient(135deg, #1f2330, #2c3a5c);
+    background: linear-gradient(135deg, #1f2330 0%, #2c3a5c 100%);
     color: white;
-    padding: 28px 40px;
+    padding: 40px;
+    box-shadow: var(--shadow-md);
   }
-  header h1 { margin: 0 0 6px 0; font-size: 24px; }
-  header .meta { color: #c7cad3; font-size: 13px; }
-  main { padding: 32px 40px; max-width: 1200px; margin: 0 auto; }
+  header h1 { 
+    margin: 0 0 8px 0; 
+    font-size: 28px; 
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  header .meta { 
+    color: #c7cad3; 
+    font-size: 13px; 
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header .meta code {
+    background: rgba(255,255,255,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  main { padding: 40px; max-width: 1400px; margin: 0 auto; }
   .summary-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 14px;
-    margin-bottom: 28px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
   }
   .stat {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .stat:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
   }
   .stat .label {
     font-size: 11px;
     text-transform: uppercase;
     color: var(--muted);
     letter-spacing: 0.6px;
+    font-weight: 600;
   }
   .stat .value {
-    font-size: 28px;
-    font-weight: 600;
-    margin-top: 4px;
+    font-size: 32px;
+    font-weight: 700;
+    margin-top: 8px;
+    letter-spacing: -0.5px;
   }
   .stat.pass .value { color: var(--accent); }
   .stat.fail .value { color: var(--danger); }
+  .stat.secondary .value { color: var(--warning); }
   .panel {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px 24px;
-    margin-bottom: 22px;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
   }
-  .panel h2 { margin: 0 0 12px 0; font-size: 17px; }
+  .panel h2 { 
+    margin: 0 0 16px 0; 
+    font-size: 18px; 
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
   .charts {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
   }
-  .charts img { width: 100%; border-radius: 6px; }
+  .charts img { 
+    width: 100%; 
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .performance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .perf-item {
+    background: #f3f4f6;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .perf-item .label {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .perf-item .value {
+    font-weight: 700;
+    color: var(--text);
+    margin-top: 4px;
+  }
   table {
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
   }
   th, td {
-    padding: 8px 10px;
+    padding: 12px;
     text-align: left;
     border-bottom: 1px solid var(--border);
-    vertical-align: top;
+    vertical-align: middle;
   }
-  th { background: #f1f3f6; font-weight: 600; }
+  th { 
+    background: #f3f4f6; 
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+  }
+  tr:hover { background: #f9fafb; }
   .pill {
     display: inline-block;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.3px;
   }
-  .pill.pass { background: #d6efe0; color: #1e5b39; }
-  .pill.fail { background: #fadcd2; color: #8a3c2a; }
+  .pill.pass { 
+    background: var(--accent-light); 
+    color: #047857; 
+  }
+  .pill.fail { 
+    background: var(--danger-light); 
+    color: #991b1b; 
+  }
   .pill.failure-type {
-    background: #fff1d6; color: #7a5a1a; margin-left: 4px;
+    background: var(--warning-light); 
+    color: #92400e;
+    margin-left: 6px;
+  }
+  .filter-bar {
+    background: #f3f4f6;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-bar input,
+  .filter-bar select {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
   }
   details {
     border-top: 1px solid var(--border);
-    padding: 10px 0;
+    padding: 12px 0;
+    margin: 8px 0;
   }
   details summary {
     cursor: pointer;
     font-weight: 600;
     color: var(--text);
     font-size: 14px;
+    padding: 6px;
+    user-select: none;
+    transition: color 0.2s;
   }
+  details summary:hover { color: var(--accent); }
   details[open] summary { color: var(--accent); }
   pre {
     background: #0f1117;
     color: #e3e6ee;
-    padding: 12px;
-    border-radius: 6px;
+    padding: 14px;
+    border-radius: 8px;
     overflow-x: auto;
     font-size: 12px;
-    line-height: 1.45;
+    line-height: 1.5;
+    border: 1px solid #30363d;
   }
   .case-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
-    margin-top: 10px;
+    margin-top: 12px;
+  }
+  @media (max-width: 1024px) {
+    .case-grid { grid-template-columns: 1fr; }
   }
   .case-grid > div h4 {
-    margin: 0 0 6px 0;
+    margin: 0 0 8px 0;
     font-size: 12px;
     text-transform: uppercase;
     color: var(--muted);
     letter-spacing: 0.5px;
+    font-weight: 700;
   }
   .evaluator-row {
     display: grid;
-    grid-template-columns: 200px 80px 80px 1fr;
-    gap: 10px;
-    padding: 6px 0;
+    grid-template-columns: 200px 90px 90px 1fr;
+    gap: 12px;
+    padding: 8px 0;
     border-bottom: 1px dashed var(--border);
-    font-size: 12px;
+    font-size: 13px;
+  }
+  @media (max-width: 768px) {
+    .evaluator-row { grid-template-columns: 1fr; }
   }
   .evaluator-row .name { font-weight: 600; }
-  .badge { font-family: monospace; }
-  .judge-rationale {
-    background: #f8f5ee;
-    border-left: 3px solid var(--warning);
-    padding: 8px 12px;
-    margin: 6px 0;
+  .badge { 
+    font-family: 'Monaco', 'Menlo', monospace; 
+    background: #f3f4f6;
+    padding: 2px 6px;
     border-radius: 4px;
     font-size: 12px;
+  }
+  .judge-rationale {
+    background: var(--warning-light);
+    border-left: 4px solid var(--warning);
+    padding: 10px 12px;
+    margin: 8px 0;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .judge-rationale strong {
+    font-weight: 700;
+    color: #92400e;
+  }
+  .judge-rationale ul {
+    margin: 6px 0;
+    padding-left: 20px;
+  }
+  .recommendation {
+    background: #dcfce7;
+    border-left: 4px solid var(--accent);
+    padding: 10px 12px;
+    margin: 8px 0;
+    border-radius: 6px;
+    font-size: 13px;
   }
   footer {
     text-align: center;
     color: var(--muted);
-    font-size: 11px;
-    padding: 24px 40px 32px;
+    font-size: 12px;
+    padding: 32px 40px 40px;
+    border-top: 1px solid var(--border);
   }
+  footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  footer a:hover { text-decoration: underline; }
+  .tag {
+    display: inline-block;
+    padding: 3px 8px;
+    background: #e0e7ff;
+    color: #3730a3;
+    border-radius: 4px;
+    font-size: 11px;
+    margin: 2px;
+    font-weight: 500;
+  }
+  .metrics-header {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
 </style>
 </head>
 <body>
 <header>
-  <h1>Evaluation Report — {{ report.agent_name }}</h1>
+  <h1>⚡ Evaluation Report — {{ report.agent_name }}</h1>
   <div class="meta">
-    Run <code>{{ report.run_id }}</code> ·
-    Started {{ report.started_at.strftime('%Y-%m-%d %H:%M:%S UTC') }} ·
-    Finished {{ report.finished_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+    <span>Run: <code>{{ report.run_id }}</code></span>
+    <span>Started: {{ report.started_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</span>
+    <span>Duration: {{ ((report.finished_at - report.started_at).total_seconds()|round|int) }}s</span>
   </div>
 </header>
 
 <main>
+  <!-- Summary Cards -->
   <section class="summary-grid">
-    <div class="stat"><div class="label">Total cases</div><div class="value">{{ report.total }}</div></div>
-    <div class="stat pass"><div class="label">Passed</div><div class="value">{{ report.passed }}</div></div>
-    <div class="stat fail"><div class="label">Failed</div><div class="value">{{ report.failed }}</div></div>
-    <div class="stat"><div class="label">Pass rate</div><div class="value">{{ report.pass_rate | pct }}</div></div>
-    <div class="stat"><div class="label">Avg score</div><div class="value">{{ report.average_score | score }}</div></div>
+    <div class="stat">
+      <div class="label">Total Cases</div>
+      <div class="value">{{ report.total }}</div>
+    </div>
+    <div class="stat pass">
+      <div class="label">✓ Passed</div>
+      <div class="value">{{ report.passed }}</div>
+    </div>
+    <div class="stat fail">
+      <div class="label">✗ Failed</div>
+      <div class="value">{{ report.failed }}</div>
+    </div>
+    <div class="stat secondary">
+      <div class="label">Pass Rate</div>
+      <div class="value">{{ report.pass_rate | pct }}</div>
+    </div>
+    <div class="stat">
+      <div class="label">Avg Score</div>
+      <div class="value">{{ report.average_score | score }}</div>
+    </div>
+    <div class="stat">
+      <div class="label">Consistency</div>
+      <div class="value">
+        {%- if report.results -%}
+          {{- (report.results|selectattr('passed', 'equalto', true)|list|length / report.total * 100)|round(0)|int }}%
+        {%- else -%}
+          N/A
+        {%- endif -%}
+      </div>
+    </div>
+  </section>
+
+  <!-- Performance Metrics -->
+  <section class="panel">
+    <h2>📊 Performance Metrics</h2>
+    <div class="performance-grid">
+      <div class="perf-item">
+        <div class="label">Avg Latency</div>
+        <div class="value">
+          {%- if report.results -%}
+            {{- (report.results|map(attribute='runner_result.duration_ms')|sum / report.total)|round(1) }} ms
+          {%- else -%}
+            N/A
+          {%- endif -%}
+        </div>
+      </div>
+      <div class="perf-item">
+        <div class="label">Min Latency</div>
+        <div class="value">
+          {%- if report.results -%}
+            {{- report.results|map(attribute='runner_result.duration_ms')|min|round(1) }} ms
+          {%- else -%}
+            N/A
+          {%- endif -%}
+        </div>
+      </div>
+      <div class="perf-item">
+        <div class="label">Max Latency</div>
+        <div class="value">
+          {%- if report.results -%}
+            {{- report.results|map(attribute='runner_result.duration_ms')|max|round(1) }} ms
+          {%- else -%}
+            N/A
+          {%- endif -%}
+        </div>
+      </div>
+      <div class="perf-item">
+        <div class="label">Total Time</div>
+        <div class="value">{{ ((report.finished_at - report.started_at).total_seconds()|round|int) }}s</div>
+      </div>
+    </div>
   </section>
 
   {% if score_chart or failure_chart or history_chart %}
   <section class="panel">
-    <h2>Charts</h2>
+    <h2>📈 Visualizations</h2>
     <div class="charts">
       {% if score_chart %}
       <img src="data:image/png;base64,{{ score_chart }}" alt="Score per test case" />
@@ -190,54 +413,68 @@
   {% endif %}
 
   <section class="panel">
-    <h2>Test cases</h2>
-    <table>
+    <h2>🧪 Test Cases</h2>
+    <div class="filter-bar">
+      <input type="text" id="filterInput" placeholder="Search test IDs or descriptions..." style="flex: 1; min-width: 200px;">
+      <select id="statusFilter" style="min-width: 120px;">
+        <option value="">All Status</option>
+        <option value="pass">Passed</option>
+        <option value="fail">Failed</option>
+      </select>
+    </div>
+    <table id="testTable">
       <thead>
         <tr>
-          <th style="width: 130px;">ID</th>
+          <th style="width: 140px;">ID</th>
           <th>Description</th>
-          <th style="width: 70px;">Status</th>
-          <th style="width: 70px;">Score</th>
-          <th style="width: 90px;">Time</th>
+          <th style="width: 80px;">Status</th>
+          <th style="width: 80px;">Score</th>
+          <th style="width: 100px;">Latency</th>
         </tr>
       </thead>
       <tbody>
       {% for r in report.results %}
-        <tr>
+        <tr class="test-row" data-status="{% if r.passed %}pass{% else %}fail{% endif %}">
           <td><code>{{ r.test_case.id }}</code></td>
           <td>
             {{ r.test_case.description or "" }}
+            {% for tag in r.test_case.tags %}
+              <span class="tag">{{ tag }}</span>
+            {% endfor %}
             {% if r.failure_report %}
               <span class="pill failure-type">{{ r.failure_report.failure_type }}</span>
             {% endif %}
           </td>
           <td>
             {% if r.passed %}
-              <span class="pill pass">PASS</span>
+              <span class="pill pass">✓ PASS</span>
             {% else %}
-              <span class="pill fail">FAIL</span>
+              <span class="pill fail">✗ FAIL</span>
             {% endif %}
           </td>
           <td class="badge">{{ r.score | score }}</td>
-          <td class="badge">{{ "%.0f" | format(r.runner_result.duration_ms) }} ms</td>
+          <td class="badge">{{ "%.1f" | format(r.runner_result.duration_ms) }} ms</td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
   </section>
 
+
   <section class="panel">
-    <h2>Detailed results</h2>
+    <h2>📋 Detailed Results</h2>
     {% for r in report.results %}
     <details {% if not r.passed %}open{% endif %}>
       <summary>
         {% if r.passed %}
-          <span class="pill pass">PASS</span>
+          <span class="pill pass">✓ PASS</span>
         {% else %}
-          <span class="pill fail">FAIL</span>
+          <span class="pill fail">✗ FAIL</span>
         {% endif %}
-        &nbsp;<code>{{ r.test_case.id }}</code> — {{ r.test_case.description or "" }}
-        &nbsp;<span class="badge">score {{ r.score | score }}</span>
+        &nbsp;<code>{{ r.test_case.id }}</code>
+        &nbsp;—&nbsp;{{ r.test_case.description or "" }}
+        &nbsp;<span class="badge">{{ r.score | score }}</span>
+        &nbsp;<span class="badge">{{ "%.1f" | format(r.runner_result.duration_ms) }}ms</span>
       </summary>
 
       <div class="case-grid">
@@ -246,39 +483,39 @@
           <pre>{{ r.test_case.input | pretty_json }}</pre>
         </div>
         <div>
-          <h4>Expected</h4>
+          <h4>Expected Output</h4>
           <pre>{{ r.test_case.expected | pretty_json }}</pre>
         </div>
         <div>
-          <h4>Actual output</h4>
+          <h4>Actual Output</h4>
           <pre>{{ r.runner_result.output | pretty_json }}</pre>
         </div>
         <div>
-          <h4>Runner</h4>
-          <pre>duration: {{ "%.0f" | format(r.runner_result.duration_ms) }} ms
-error:    {{ r.runner_result.error or "—" }}</pre>
+          <h4>Runtime Details</h4>
+          <pre>duration:  {{ "%.1f" | format(r.runner_result.duration_ms) }} ms
+status:    {% if r.runner_result.error %}ERROR{% else %}OK{% endif %}
+error:     {{ r.runner_result.error or "—" }}</pre>
         </div>
       </div>
 
-      <h4 style="margin-top:14px;">Evaluators</h4>
+      <h4 style="margin-top: 16px; margin-bottom: 8px;">Evaluators</h4>
       {% for ev in r.evaluator_results %}
       <div class="evaluator-row">
         <div class="name">{{ ev.evaluator }}</div>
         <div>
           {% if ev.passed %}
-            <span class="pill pass">PASS</span>
+            <span class="pill pass">✓ PASS</span>
           {% else %}
-            <span class="pill fail">FAIL</span>
+            <span class="pill fail">✗ FAIL</span>
           {% endif %}
         </div>
-        <div class="badge">{{ ev.score | score }}</div>
+        <div class="badge">{{ ev.score | score }} ({{ "%.0f" | format(ev.weight * 100) }}%)</div>
         <div>
           {{ ev.detail }}
           {% if ev.evaluator.startswith("llm_judge") and ev.breakdown.criteria %}
             {% for crit, info in ev.breakdown.criteria.items() %}
               <div class="judge-rationale">
-                <strong>{{ crit }}</strong> — {{ info.score | score }}
-                ({{ "%.0f" | format(info.weight * 100) }}%)
+                <strong>{{ crit }}</strong> — {{ info.score | score }} ({{ "%.0f" | format(info.weight * 100) }}%)
                 <br/>{{ info.rationale }}
               </div>
             {% endfor %}
@@ -288,20 +525,17 @@ error:    {{ r.runner_result.error or "—" }}</pre>
       {% endfor %}
 
       {% if r.failure_report %}
-      <h4 style="margin-top:14px;">Failure analysis</h4>
+      <h4 style="margin-top: 16px; margin-bottom: 8px;">🔍 Failure Analysis</h4>
       <div class="judge-rationale">
         <strong>{{ r.failure_report.failure_type }}</strong>
-        (confidence {{ r.failure_report.confidence | score }})
+        (confidence: {{ r.failure_report.confidence | score }})
         <br/>{{ r.failure_report.summary }}
         {% if r.failure_report.evidence %}
-        <ul>
+        <ul style="margin: 6px 0; padding-left: 20px;">
         {% for e in r.failure_report.evidence %}
           <li>{{ e }}</li>
         {% endfor %}
         </ul>
-        {% endif %}
-        {% if r.failure_report.error %}
-        <em>Note: {{ r.failure_report.error }}</em>
         {% endif %}
       </div>
       {% endif %}
@@ -311,7 +545,35 @@ error:    {{ r.runner_result.error or "—" }}</pre>
 </main>
 
 <footer>
-  Generated by <a href="https://github.com/AuxiLabs-Auxiliobits/auxilab-eval-harness">auxilab-eval-harness</a>
+  <p>Generated by <a href="https://github.com/AuxiLabs-Auxiliobits/auxilab-eval-harness" target="_blank">auxilab-eval-harness</a> — Framework-agnostic evaluation for agentic AI</p>
+  <p style="font-size: 11px; margin-top: 12px; color: #9ca3af;">Report ID: <code>{{ report.run_id }}</code></p>
 </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const filterInput = document.getElementById('filterInput');
+  const statusFilter = document.getElementById('statusFilter');
+  const testRows = document.querySelectorAll('.test-row');
+
+  function applyFilters() {
+    const searchTerm = (filterInput?.value || '').toLowerCase();
+    const statusValue = statusFilter?.value || '';
+
+    testRows.forEach(row => {
+      const idCell = row.querySelector('code')?.textContent.toLowerCase() || '';
+      const descCell = row.textContent.toLowerCase();
+      const status = row.getAttribute('data-status');
+
+      const matchesSearch = searchTerm === '' || idCell.includes(searchTerm) || descCell.includes(searchTerm);
+      const matchesStatus = statusValue === '' || status === statusValue;
+
+      row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+    });
+  }
+
+  filterInput?.addEventListener('input', applyFilters);
+  statusFilter?.addEventListener('change', applyFilters);
+});
+</script>
 </body>
 </html>

@@ -147,6 +147,54 @@ class EvalReport:
         from auxilab_eval.reporter.html import render_html_report
         return render_html_report(self, path, include_history=include_history)
 
+    def to_csv(self, path: PathLike) -> Path:
+        """Export results to CSV for analysis in Excel/spreadsheets."""
+        import csv
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            
+            # Header
+            writer.writerow([
+                "Test ID",
+                "Description",
+                "Status",
+                "Score",
+                "Duration (ms)",
+                "Pass Threshold",
+                "Failure Type",
+                "Failure Confidence",
+                "Tags",
+            ])
+            
+            # Rows
+            for result in self.results:
+                failure_type = (
+                    result.failure_report.failure_type
+                    if result.failure_report else ""
+                )
+                failure_conf = (
+                    f"{result.failure_report.confidence:.2f}"
+                    if result.failure_report else ""
+                )
+                tags_str = ",".join(result.test_case.tags)
+                
+                writer.writerow([
+                    result.test_case.id,
+                    result.test_case.description or "",
+                    "PASS" if result.passed else "FAIL",
+                    f"{result.score:.2f}",
+                    f"{result.runner_result.duration_ms:.1f}",
+                    result.test_case.pass_threshold,
+                    failure_type,
+                    failure_conf,
+                    tags_str,
+                ])
+        
+        return path
+
     def summary(self) -> str:
         lines = [
             f"Run {self.run_id} — agent={self.agent_name}",
