@@ -1,6 +1,6 @@
 # 🏆 auxilab-eval-harness: Production-Grade Evaluation Framework
 
-**Status**: ✅ Competition-Ready | **Tests**: 38 | **Exports**: 3 formats | **Documentation**: Complete
+**Status**: ✅ Competition-Ready | **Tests**: 38 | **Exports**: 3 formats | **Documentation**: Complete | **Slide Deck**: [`docs/slide_deck.md`](docs/slide_deck.md)
 
 Transform your AI agents into production-grade systems with comprehensive evaluation, beautiful reports, and rich analytics.
 
@@ -774,6 +774,32 @@ report = harness.run_evaluation(...)
 if report.pass_rate < 0.9:
     notify_slack(f"Tests failing: {report.pass_rate:.1%}")
 ```
+
+---
+
+## ⚠️ Known Limitations
+
+- **LLM-judge evaluator requires an Anthropic API key** — tests using `llm_judge` are skipped if `ANTHROPIC_API_KEY` is not set
+- **Semantic evaluator downloads a model on first use** — `sentence-transformers` pulls ~90 MB on first run; subsequent runs are offline
+- **No built-in parallelism** — test cases execute sequentially; large suites (100+) may be slow
+- **HTTP runner requires a live endpoint** — `http_runner` tests will fail if the target service is not running
+- **LangGraph runner requires LangGraph 0.2+** — older LangGraph versions are not supported
+- **History database is local only** — `.auxilab_eval/history.sqlite` is not shared across machines
+- **Report charts require matplotlib** — if omitted, HTML reports render without charts but are otherwise fully functional
+- **Python 3.9+ only** — f-strings and `match` syntax used internally; Python 3.8 is not supported despite pyproject classifier
+
+---
+
+## 🎬 Demo Video
+
+> **Watch the 3-minute end-to-end demo:**
+> 🔗 [https://LINK](https://LINK)
+
+The video covers:
+1. Installing the harness with `pip install -e .`
+2. Running `python demo_all_features.py`
+3. Viewing the interactive HTML report in a browser
+4. Running a custom test case from the CLI
 
 ---
 
