@@ -331,9 +331,20 @@ class EvalHarness:
     def _persist_history(self, report: EvalReport) -> None:
         if self.history_db is None:
             return
-        from auxilab_eval.reporter.store import HistoryStore
-        store = HistoryStore(self.history_db)
-        store.record(report)
+        try:
+            from auxilab_eval.reporter.store import HistoryStore
+            store = HistoryStore(self.history_db)
+            store.record(report)
+        except Exception as exc:  # noqa: BLE001
+            # History persistence is best-effort — a DB failure must never
+            # discard a completed evaluation result.
+            import warnings
+            warnings.warn(
+                f"[auxilab-eval] Failed to persist run history to "
+                f"{self.history_db}: {exc}",
+                RuntimeWarning,
+                stacklevel=2,
+            )
 
 
 def _weighted_score(results: list[EvaluationResult]) -> float:

@@ -160,8 +160,12 @@ def run(
     )
     
     click.echo("  ⏱️  Running tests...\n")
-    report = harness.run()
-    
+    try:
+        report = harness.run()
+    except Exception as exc:  # noqa: BLE001
+        click.echo(f"\n  ❌ Evaluation failed: {exc}", err=True)
+        sys.exit(2)
+
     # Print rich summary
     click.echo(_format_summary(report))
 
