@@ -8,13 +8,22 @@ Transform your AI agents into production-grade systems with comprehensive evalua
 
 ## ⚡ Quick Start (Choose Your Speed)
 
-### 🚀 Fastest: See Everything (1 minute)
+### �️ Easiest: Web UI (no CLI knowledge needed)
+```bash
+pip install -e .
+pip install -r requirements.txt
+python app.py
+```
+Then open **http://127.0.0.1:7860** in your browser.
+Upload a YAML test file, pick an agent, click **Run Evaluation** — done.
+
+### 🚀 Fastest: See Everything via CLI (1 minute)
 ```bash
 python demo_all_features.py
 ```
-Shows beautiful colored CLI output, runs all tests, generates HTML reports and CSV exports.
+Shows colourised CLI output, runs all 38 tests, generates HTML reports and CSV exports.
 
-### 📖 Quick: Get Running (5 minutes)
+### 📖 Quick: CLI Commands (5 minutes)
 ```bash
 # Run AP Exception tests
 auxilab-eval run \
@@ -43,6 +52,97 @@ python demo_all_features.py
 # View history
 auxilab-eval history --limit 20
 ```
+
+---
+
+## 🖥️ Web UI — Interactive Evaluation
+
+The web UI lets you evaluate any agent through a browser — no terminal commands required.
+
+### Starting the UI
+
+```bash
+# Make sure dependencies are installed
+pip install -e .
+pip install -r requirements.txt
+
+# Launch the server
+python app.py
+```
+
+Open **http://127.0.0.1:7860** in Chrome or Edge.
+
+> **Tip for VS Code users**: Do not click the link in the terminal (it opens VS Code's built-in browser).
+> Copy the URL and paste it directly into Chrome or Edge.
+
+### How to use it
+
+**Step 1 — Upload your test cases**
+
+Click the upload box and attach any `.yaml` or `.yml` test case file.
+Use the built-in examples in `demo/test_cases/` to get started:
+- `demo/test_cases/ap_exception_tests.yaml` — 20 AP Exception tests
+- `demo/test_cases/payment_run_tests.yaml` — 18 Payment Run tests
+
+**Step 2 — Select an agent**
+
+Pick from the dropdown:
+| Agent | Description |
+|---|---|
+| AP Exception Handler | Classifies invoice exceptions: approve, flag_duplicate, needs_review, reject |
+| Payment Run Agent | Processes payment decisions: pay_now, hold, split_payment, defer, reject |
+
+The agent description panel shows required and optional input fields so you know which test file to pair with it.
+
+**Step 3 — Run**
+
+Click **▶ Run Evaluation**. Results appear immediately:
+- **Summary card** — pass rate, average score, latency, run ID
+- **📥 Download HTML Report** — button appears after a successful run; click it to save the full interactive HTML report to your machine
+- **Results table** — one row per test: ID, description, ✅ PASS / ❌ FAIL, score, duration, failure type
+- **Full JSON output** — expandable section with complete detail for every test case
+
+### Error handling
+
+The UI validates your input before running and gives clear error messages:
+
+| Problem | Message shown |
+|---|---|
+| No file uploaded | "No file uploaded" |
+| Wrong file type (e.g. `.txt`) | "Wrong file type: `.txt`" |
+| Broken YAML syntax | YAML parse error with line/column |
+| YAML is not a list | "Wrong structure" with example |
+| Test case missing `id`/`input`/`expected` | Lists each broken item by name |
+| No agent selected | "No agent selected" + lists available agents |
+| Wrong agent for the test file | "Agent/test case mismatch" with tip |
+| Any runtime exception | Full traceback in a code block |
+
+### Writing your own test cases for the UI
+
+Create a `.yaml` file anywhere on your machine following this format:
+
+```yaml
+- id: my_001_duplicate
+  description: Block duplicate invoices
+  tags: [custom]
+  input:
+    invoice_id: INV-9999
+    amount: 12000.00
+    vendor: Acme Corp
+    po_number: PO-55
+    due_date: "2026-08-01"
+    duplicate_of: INV-9998
+  expected:
+    decision: flag_duplicate
+  evaluators:
+    - type: exact
+      field: decision
+    - type: regex
+      field: reason
+      pattern: "(?i)duplicate"
+```
+
+Upload it via the UI, select the matching agent, and run.
 
 ---
 
