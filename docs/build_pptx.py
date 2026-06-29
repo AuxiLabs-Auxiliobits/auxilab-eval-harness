@@ -219,23 +219,23 @@ def make_slide2(prs):
     fill_bg(slide, DARK_BG)
     slide_header(slide,
                  "What We Built",
-                 "auxilab-eval-harness — Production-Grade Evaluation Framework for AI Agents")
+                 "auxilab-eval-harness — Evaluate AI Agents via CLI or Browser UI")
 
     # Tagline
     add_label(slide,
-              "Define YAML test cases → run against any Python agent → get structured reports.",
+              "Define YAML test cases → run against any Python agent → get structured reports — CLI or browser.",
               Inches(0.4), Inches(1.5), Inches(12.5), Inches(0.45),
-              font_size=17, color=LIGHT_GREY)
+              font_size=16, color=LIGHT_GREY)
 
     # Capabilities table
     headers = ["Capability", "Detail"]
     rows = [
-        ["YAML test definitions",  "Inputs, expected outputs & eval strategy in plain YAML"],
-        ["5 evaluator types",      "exact · regex · json_schema · semantic · llm_judge"],
-        ["3 export formats",       "Interactive HTML report · JSON · CSV (Excel-ready)"],
-        ["Rich CLI",               "Colorized pass/fail output with latency & score tracking"],
-        ["History tracking",       "SQLite-backed run history for trend analysis"],
-        ["CI/CD ready",            "Exit codes 0 / 1 / 2 — drop straight into GitHub Actions"],
+        ["Gradio Web UI",       "Upload YAML, pick agent, click Run — no CLI needed. Download HTML report."],
+        ["YAML test definitions", "Inputs, expected outputs & eval strategy in plain YAML"],
+        ["5 evaluator types",   "exact · regex · json_schema · semantic · llm_judge"],
+        ["3 export formats",    "Interactive HTML report · JSON · CSV (Excel-ready)"],
+        ["Rich CLI",            "Colorized pass/fail output with latency & score tracking"],
+        ["CI/CD ready",         "Exit codes 0 / 1 / 2 — drop straight into GitHub Actions"],
     ]
     table_box(slide, headers, rows,
               Inches(0.4), Inches(2.1),
@@ -246,8 +246,8 @@ def make_slide2(prs):
              RGBColor(0x05, 0x18, 0x2E))
     add_label(slide, "Tech Stack", Inches(10.2), Inches(2.2),
               Inches(2.8), Inches(0.4), font_size=13, bold=True, color=ACCENT)
-    stack = ["Python 3.9+", "Pydantic v2", "Click", "Jinja2",
-             "Anthropic Claude*", "sentence-transformers*", "", "* optional"]
+    stack = ["Python 3.9+", "Pydantic v2", "Click", "Gradio 6",
+             "Jinja2", "Anthropic Claude*", "sentence-transformers*", "", "* optional"]
     bullet_box(slide, stack, Inches(10.2), Inches(2.65),
                Inches(2.8), Inches(4.0), font_size=13, bullet="· ")
 
@@ -259,85 +259,73 @@ def make_slide2(prs):
 def make_slide3(prs):
     slide = blank_slide(prs)
     fill_bg(slide, DARK_BG)
-    slide_header(slide, "Demo — See It In Action", "3-minute end-to-end walkthrough")
-
-    # Left: steps
-    add_label(slide, "Three commands to full report",
-              Inches(0.4), Inches(1.55), Inches(5.8), Inches(0.4),
-              font_size=15, bold=True, color=ACCENT)
-
-    steps = [
-        "1.  pip install -e .",
-        "      One-line install, no env hacks",
-        "",
-        "2.  python demo_all_features.py",
-        "      Runs 38 tests across 2 agents",
-        "",
-        "3.  Open reports/ap_exception_report.html",
-        "      Interactive HTML report in browser",
-    ]
-    bullet_box(slide, steps, Inches(0.4), Inches(2.0),
-               Inches(5.6), Inches(4.8), font_size=14, bullet="")
+    slide_header(slide, "Demo — Two Ways to Run", "Browser UI (no CLI needed)  |  CLI for power users & CI/CD")
 
     # vertical divider
-    add_rect(slide, Inches(6.3), Inches(1.5), Pt(2), Inches(5.6), ACCENT)
+    add_rect(slide, Inches(6.55), Inches(1.5), Pt(2), Inches(5.7), ACCENT)
 
-    # Right: CLI output mockup
-    add_label(slide, "CLI Output",
-              Inches(6.6), Inches(1.55), Inches(6.3), Inches(0.4),
+    # ── LEFT: Web UI panel ────────────────────────────────────────────────────
+    add_label(slide, "🖼️  Path A — Web UI",
+              Inches(0.3), Inches(1.55), Inches(6.0), Inches(0.4),
+              font_size=15, bold=True, color=ACCENT)
+
+    ui_steps = [
+        "1.  python app.py",
+        "      Opens http://127.0.0.1:7860",
+        "",
+        "2.  Upload .yaml test file",
+        "      or click a built-in example",
+        "",
+        "3.  Select agent from dropdown",
+        "      Description shows required fields",
+        "",
+        "4.  Click  ▶ Run Evaluation",
+        "",
+        "5.  📥 Download HTML Report button",
+        "      Same interactive report as CLI",
+    ]
+    bullet_box(slide, ui_steps, Inches(0.3), Inches(2.05),
+               Inches(6.0), Inches(5.1), font_size=13, bullet="")
+
+    # ── RIGHT: CLI panel ───────────────────────────────────────────────────────
+    add_label(slide, "🖥️  Path B — CLI",
+              Inches(6.75), Inches(1.55), Inches(6.3), Inches(0.4),
               font_size=15, bold=True, color=YELLOW)
 
-    cli_box = slide.shapes.add_textbox(Inches(6.6), Inches(2.0),
-                                       Inches(6.3), Inches(2.3))
-    cli_box.word_wrap = True
+    add_rect(slide, Inches(6.75), Inches(2.05), Inches(6.3), Inches(2.1),
+             RGBColor(0x05, 0x12, 0x22))
+    cli_box = slide.shapes.add_textbox(Inches(6.85), Inches(2.1),
+                                       Inches(6.1), Inches(2.0))
     tf = cli_box.text_frame
-    tf.word_wrap = True
-    cli_text = (
+    p = tf.paragraphs[0]
+    run = p.add_run()
+    run.text = (
         "╔════════════════════════════════╗\n"
         "║  Evaluation Complete           ║\n"
         "╚════════════════════════════════╝\n"
-        "\n"
-        "  ✓ Passed:    18 / 20\n"
-        "  ✗ Failed:     2 / 20\n"
-        "  Pass Rate:  🟢 90.0 %\n"
-        "  Avg Score:    0.89\n"
-        "\n"
-        "  Avg Latency:  12.4 ms\n"
-        "  Min Latency:   8.2 ms\n"
-        "  Max Latency:  18.7 ms"
+        "  ✓ Passed:  18/20  🟢 90.0%\n"
+        "  Avg Latency: 12.4 ms"
     )
-    add_rect(slide, Inches(6.6), Inches(2.0), Inches(6.3), Inches(2.3),
-             RGBColor(0x05, 0x12, 0x22))
-    p = tf.paragraphs[0]
-    run = p.add_run()
-    run.text = cli_text
     run.font.size = Pt(11)
     run.font.color.rgb = GREEN
     run.font.name = "Courier New"
 
-    # YAML example
-    add_label(slide, "Add a test in 10 lines of YAML",
-              Inches(6.6), Inches(4.45), Inches(6.3), Inches(0.4),
-              font_size=14, bold=True, color=ACCENT)
-    yaml_text = (
-        "- id: my_001_duplicate\n"
-        "  input:\n"
-        "    invoice_id: INV-9999\n"
-        "    duplicate_of: INV-9998\n"
-        "  expected:\n"
-        "    decision: flag_duplicate\n"
-        "  evaluators:\n"
-        "    - type: exact\n"
-        "      field: decision"
-    )
-    add_rect(slide, Inches(6.6), Inches(4.9), Inches(6.3), Inches(2.3),
+    add_label(slide, "Command:",
+              Inches(6.75), Inches(4.3), Inches(6.3), Inches(0.35),
+              font_size=13, bold=True, color=ACCENT)
+    add_rect(slide, Inches(6.75), Inches(4.65), Inches(6.3), Inches(1.5),
              RGBColor(0x05, 0x12, 0x22))
-    yaml_box = slide.shapes.add_textbox(Inches(6.7), Inches(4.95),
-                                        Inches(6.1), Inches(2.2))
-    tf2 = yaml_box.text_frame
+    cmd_box = slide.shapes.add_textbox(Inches(6.85), Inches(4.7),
+                                       Inches(6.1), Inches(1.4))
+    tf2 = cmd_box.text_frame
     p2 = tf2.paragraphs[0]
     r2 = p2.add_run()
-    r2.text = yaml_text
+    r2.text = (
+        "auxilab-eval run \\\n"
+        "  --tests ap_tests.yaml \\\n"
+        "  --agent demo.agent:handle \\\n"
+        "  --html report.html"
+    )
     r2.font.size = Pt(11)
     r2.font.color.rgb = LIGHT_GREY
     r2.font.name = "Courier New"
@@ -428,9 +416,9 @@ def make_slide5(prs):
               font_size=14, bold=True, color=WHITE)
     now_items = [
         "Parallel test execution (asyncio)",
-        "Gradio web UI — no CLI needed",
         "GitHub Actions workflow template",
         "Slack / email threshold alerts",
+        "UI: side-by-side run comparison",
     ]
     add_rect(slide, Inches(0.3), Inches(1.95), COL_W, Inches(2.6),
              RGBColor(0x0A, 0x1E, 0x35))
@@ -445,9 +433,9 @@ def make_slide5(prs):
               font_size=14, bold=True, color=WHITE)
     next_items = [
         "Native LangGraph runner",
-        "Multi-run regression comparison",
         "Team dashboard with shared DB",
         "OpenAI & other LLM judge backends",
+        "UI: upload agent .py directly",
     ]
     add_rect(slide, Inches(4.5), Inches(1.95), COL_W, Inches(2.6),
              RGBColor(0x08, 0x1E, 0x18))
@@ -478,9 +466,9 @@ def make_slide5(prs):
               Inches(0.5), Inches(5.1), Inches(12.3), Inches(0.6),
               font_size=20, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
     add_label(slide,
-              "pip install auxilab-eval   →   add your first test case in 5 minutes",
+              "python app.py   →   open http://127.0.0.1:7860   →   run your first evaluation in 2 minutes",
               Inches(0.5), Inches(5.75), Inches(12.3), Inches(0.55),
-              font_size=18, color=ACCENT, align=PP_ALIGN.CENTER)
+              font_size=17, color=ACCENT, align=PP_ALIGN.CENTER)
     add_label(slide,
               "github.com/AuxiLabs-Auxiliobits/auxilab-eval-harness",
               Inches(0.5), Inches(6.35), Inches(12.3), Inches(0.45),

@@ -1,5 +1,5 @@
 # auxilab-eval-harness — Slide Deck
-### AuxiLab Hackathon Submission · 5 Slides
+### AuxiLab Hackathon Submission · 6 Slides
 
 > **Convert to PPT/PDF**: Open this file in any Markdown-to-slides tool
 > (e.g. [Marp](https://marp.app/), [Slidev](https://sli.dev/), Google Slides import, or paste into PowerPoint).
@@ -28,38 +28,59 @@
 
 ## Slide 2 — What We Built
 
-**Title**: `auxilab-eval-harness` — A Production-Grade Evaluation Framework for AI Agents
+**Title**: `auxilab-eval-harness` — Evaluate AI Agents via CLI *or* Browser UI
 
 **What it is**:
-A lightweight, framework-agnostic test harness that lets you define YAML test cases, run them against any Python AI agent, and get structured reports.
+A lightweight, framework-agnostic test harness that lets you define YAML test cases, run them against any Python AI agent, and get structured reports — from the terminal *or* a point-and-click web interface.
 
 **Core capabilities**:
 
 | Capability | Detail |
 |---|---|
+| **Gradio Web UI** | Upload YAML, pick agent, click Run — no CLI knowledge needed |
 | YAML test definitions | Declare inputs, expected outputs, and evaluation strategy in plain YAML |
 | 5 evaluator types | `exact`, `regex`, `json_schema`, `semantic`, `llm_judge` |
-| 3 output formats | Interactive HTML report, JSON, CSV (Excel-ready) |
+| 3 output formats | Interactive HTML report (downloadable), JSON, CSV (Excel-ready) |
 | Rich CLI | Colorized pass/fail output with latency tracking |
 | History tracking | SQLite-backed run history for trend analysis |
 | CI/CD ready | Exit codes 0/1/2 for pipeline integration |
 
-**Tech stack**: Python 3.9+, Pydantic v2, Click, Jinja2, Anthropic Claude (optional), sentence-transformers (optional)
+**Two ways to run**:
+- **Web UI**: `python app.py` → open http://127.0.0.1:7860
+- **CLI**: `auxilab-eval run --tests my_tests.yaml --agent demo.agent:handle --html report.html`
 
-**Visual suggestion**: Architecture diagram — YAML test cases → Harness → Runner → Evaluators → Reporter → HTML/CSV/JSON
+**Tech stack**: Python 3.9+, Pydantic v2, Click, Gradio 6, Jinja2, Anthropic Claude (optional), sentence-transformers (optional)
+
+**Visual suggestion**: Two-panel screenshot — left: Web UI in browser, right: CLI terminal output
 
 ---
 
 ## Slide 3 — Demo & Screenshots
 
-**Title**: See It In Action
+**Title**: Two Ways to Run — Browser UI & CLI
 
-**Demo flow** (3 min video: [link]):
-1. `pip install -e .` — one-line install, no environment hacks
-2. `python demo_all_features.py` — runs 38 tests across 2 agents
-3. Open `reports/ap_exception_report.html` — interactive HTML report
+---
 
-**Screenshot 1 — CLI output**:
+### Path A — Web UI (no CLI needed)
+
+**Steps**:
+1. `python app.py` → open **http://127.0.0.1:7860**
+2. Upload a `.yaml` test file (or click a built-in example)
+3. Select agent from dropdown — description panel shows required input fields
+4. Click **▶ Run Evaluation**
+5. Download the HTML report with the **📥 Download** button
+
+**Screenshot — Web UI**:
+- Left panel: file upload + agent dropdown + agent description
+- Right panel: 🟢 summary card (pass rate, score, latency) + results table
+- Each row: Test ID | ✅ PASS / ❌ FAIL | Score | Duration | Failure type
+- Expandable full JSON output section
+- Error messages shown inline for bad YAML, wrong agent, mismatched test file
+
+---
+
+### Path B — CLI (power users & CI/CD)
+
 ```
 ╔══════════════════════════════════════════╗
 ║  Evaluation Complete                     ║
@@ -68,28 +89,14 @@ A lightweight, framework-agnostic test harness that lets you define YAML test ca
   Avg Latency: 12.4 ms
 ```
 
-**Screenshot 2 — HTML Report**:
-- Modern gradient header with run metadata
-- Interactive search & filter by pass/fail status
-- Collapsible per-test detail: input → actual output → evaluator scores
-- Performance charts (latency distribution, pass rate trend)
-
-**Screenshot 3 — Custom test YAML** (how easy it is to add your own test):
-```yaml
-- id: my_001_duplicate
-  description: Block duplicate invoices
-  input:
-    invoice_id: INV-9999
-    duplicate_of: INV-9998
-    amount: 12000.00
-  expected:
-    decision: flag_duplicate
-  evaluators:
-    - type: exact
-      field: decision
+```bash
+auxilab-eval run \
+  --tests demo/test_cases/ap_exception_tests.yaml \
+  --agent demo.ap_exception_agent:handle_ap_exception \
+  --html report.html --csv results.csv
 ```
 
-**Visual suggestion**: Side-by-side screenshot of CLI output and HTML report
+**Visual suggestion**: Side-by-side screenshot — browser UI on left, terminal on right
 
 ---
 
@@ -125,17 +132,23 @@ A lightweight, framework-agnostic test harness that lets you define YAML test ca
 
 **Title**: Roadmap — From Hackathon to Production
 
+**Shipped in this submission ✅**:
+- Web UI (Gradio) — upload YAML, select agent, download HTML report
+- 38 YAML test cases across 2 Finance agents
+- 5 evaluator types including LLM-as-judge (Claude)
+- Interactive HTML reports + CSV + JSON export
+
 **Immediate next steps (v0.2)**:
 - [ ] Parallel test execution (asyncio runner) for large suites
-- [ ] Gradio web UI for running tests without CLI
 - [ ] GitHub Actions workflow template (pre-built CI yaml)
 - [ ] Threshold alerts: notify Slack/email when pass rate drops below threshold
+- [ ] UI: side-by-side run comparison ("did this agent regress vs last run?")
 
 **Medium term (v0.3)**:
 - [ ] LangGraph agent runner (native integration with graph-based agents)
-- [ ] Multi-run comparison: "did this agent regress vs last week?"
 - [ ] Team dashboard: shared history DB for multiple agents/teams
 - [ ] OpenAI and other LLM judge backends (not just Claude)
+- [ ] UI: upload custom agent Python file directly in browser
 
 **Long term vision**:
 - Self-healing test generation — Claude writes new test cases from failure patterns
@@ -144,9 +157,9 @@ A lightweight, framework-agnostic test harness that lets you define YAML test ca
 
 **Call to action**:
 > Any team building AI agents in Finance needs structured evaluation.
-> `pip install auxilab-eval` and add your first test case in 5 minutes.
+> `python app.py` and run your first evaluation in under 2 minutes.
 
-**Visual suggestion**: Roadmap timeline or "Now / Next / Later" columns
+**Visual suggestion**: "Shipped / Next / Future" three-column layout
 
 ---
 
