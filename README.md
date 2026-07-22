@@ -8,7 +8,7 @@ Transform your AI agents into production-grade systems with comprehensive evalua
 
 ## ⚡ Quick Start (Choose Your Speed)
 
-### �️ Easiest: Web UI (no CLI knowledge needed)
+### 🖱️ Easiest: Web UI (no CLI knowledge needed)
 ```bash
 pip install -e .
 pip install -r requirements.txt
@@ -162,122 +162,13 @@ Perfect for evaluating AI agents before production deployment.
 
 ---
 
-## 🎨 What's New (Enhancements)
-
-### 1. Premium HTML Reports
-Your reports now look professional with:
-- Modern gradient header with metadata
-- Interactive performance metrics dashboard
-- Real-time search and filtering
-- Summary statistics cards
-- Charts and visualizations
-- Collapsible detailed test results
-- Professional color scheme
-- Responsive mobile-friendly design
-
-**Example**: Open `reports/ap_exception_report.html` in browser
-
-### 2. Rich CLI Experience
-Command-line output with:
-- Colorized results (🟢 pass, 🟡 warning, 🔴 fail)
-- ASCII art headers
-- Performance metrics (avg/min/max latency)
-- Failure breakdown and analysis
-- Emoji indicators and professional formatting
-
-**Example**: Run `python demo_all_features.py` to see it
-
-### 3. Expanded Test Coverage
-**38 total tests** (was 20):
-- **20 AP Exception Tests**: Duplicate detection, vendor validation, PO requirements, thresholds, dates, amounts, schema validation, semantic accuracy, edge cases, regression tests
-- **18 Payment Run Tests**: Standard payments, early-pay discounts, past-due handling, fraud detection, watchlist blocking, cash management, security scenarios, edge cases
-
-### 4. CSV Export Capability
-Export results to spreadsheet:
-```bash
-auxilab-eval run \
-  --tests demo/test_cases/ap_exception_tests.yaml \
-  --agent demo.ap_exception_agent:handle_ap_exception \
-  --csv results.csv
-```
-
-Includes: Test ID, Description, Status, Score, Duration, Pass Threshold, Failure Type, Confidence, Tags
-
-### 5. Performance Analytics
-Every report now includes:
-- Average latency (ms)
-- Min/max latency tracking
-- Pass rate consistency
-- Failure distribution
-- Score aggregation
-
----
-
 ## 📊 Features Overview
 
 ### Test Coverage Matrix
 
-#### AP Exception Agent (20 Tests)
-```
-Correctness (6):
-  - ap_001: Duplicate detection (hot-path)
-  - ap_002: Unknown vendor
-  - ap_003: Missing PO
-  - ap_004: Clean approval
-  - ap_005: Over threshold
-  - ap_006: Past-due invoice
+**AP Exception Agent — 20 tests:** Correctness (6), Schema validation (3), Quality (3), Edge cases (5), Regression (3) — covering duplicate detection, unknown vendors, missing/empty PO, thresholds, dates, decimal precision, case/whitespace normalization, confidence scoring, and strategic-vendor regression.
 
-Schema Validation (3):
-  - ap_007: Invalid payload
-  - ap_008: JSON schema validation
-  - ap_009: Semantic accuracy
-
-Quality (3):
-  - ap_010: Negative amount edge case
-  - ap_011: Empty string PO
-  - ap_012: Future due date
-
-Edge Cases (5):
-  - ap_013: Threshold boundary
-  - ap_014: Small decimal precision
-  - ap_015: LLM-as-judge quality
-  - ap_016: Case-insensitive matching
-  - ap_017: Whitespace normalization
-
-Regression (3):
-  - ap_018: Today's due date (boundary)
-  - ap_019: Confidence score requirement
-  - ap_020: Strategic vendor coverage
-```
-
-#### Payment Run Agent (18 Tests)
-```
-Core Logic (6):
-  - pr_001: Happy path
-  - pr_002: Early-pay discount
-  - pr_003: Past-due high priority
-  - pr_004: Watchlist hold
-  - pr_005: Watchlist small amount (SECURITY REGRESSION)
-  - pr_006: Fraud high score
-
-Cash Management (3):
-  - pr_007: Cash constraint split (SCHEMA)
-  - pr_008: Strategic vendor payment
-  - pr_009: Schema contract validation
-
-Quality (2):
-  - pr_010: LLM-judge reasoning
-  - pr_011: Zero cash defer
-
-Edge Cases (7):
-  - pr_012: Fraud boundary condition
-  - pr_013: Future early deadline
-  - pr_014: Edge case zero amount
-  - pr_015: Precision currency conversion
-  - pr_016: Confidence score always present
-  - pr_017: Watchlist boundary test
-  - pr_018: Priority labeling consistency
-```
+**Payment Run Agent — 18 tests:** Core logic (6), Cash management (3), Quality (2), Edge cases (7) — covering happy path, early-pay discounts, past-due priority, watchlist holds, fraud scoring, cash-constrained splits, schema contracts, and a security regression for small watchlisted amounts.
 
 ### Evaluation Strategies
 
@@ -342,20 +233,7 @@ auxilab-eval history --limit 10
 
 ---
 
-## 📊 Statistics
-
-### Before vs After
-
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| Test Cases | 20 | 38 | **+90%** |
-| Export Formats | 2 | 3 | **+50%** |
-| CLI Colors | 0 | 8 | **NEW** |
-| Interactive Reports | No | Yes | ✅ |
-| CSV Export | No | Yes | ✅ |
-| Documentation | 1 | Complete | **+1000%** |
-
-### Performance
+## 📊 Performance
 
 Typical latencies:
 - **AP Exception**: 10-15ms per test
@@ -364,131 +242,26 @@ Typical latencies:
 
 ---
 
-## 💡 How to Use
-
-### 1. Define Tests (YAML)
-Create test cases in `demo/test_cases/`:
-```yaml
-- id: test_001
-  description: Test duplicate detection
-  input:
-    invoices:
-      - id: inv_123
-        amount: 100
-  expected:
-    duplicate: true
-    reason: "Duplicate invoice detected"
-  evaluator: exact
-```
-
-### 2. Implement Agent (Python)
-```python
-def handle_ap_exception(payload):
-    """Your agent logic here"""
-    return {
-        "exception_type": "DUPLICATE",
-        "confidence": 0.95,
-        "recommendation": "HOLD"
-    }
-```
-
-### 3. Run Tests
-```bash
-auxilab-eval run \
-  --tests demo/test_cases/your_tests.yaml \
-  --agent your_module:handle_ap_exception \
-  --html report.html \
-  --csv results.csv
-```
-
-### 4. Review Results
-- **HTML**: Open in browser for interactive exploration
-- **CSV**: Import into Excel for analysis
-- **CLI**: See summary in terminal
-
----
-
-## 🏆 Why This Wins
-
-### 1. Comprehensive Testing
-- **38 tests** vs typical 10-20
-- Covers happy paths, edge cases, security, regression
-- Multiple evaluation strategies
-- Security-focused with regression test for known vulnerability
-
-### 2. Professional Design
-- Beautiful, modern HTML reports
-- Interactive features (search, filter, charts)
-- Colorized CLI with professional formatting
-- Multiple export formats
-
-### 3. Production-Ready
-- Performance analytics built-in
-- Failure classification and analysis
-- History tracking for trends
-- Exit codes for CI/CD integration
-
-### 4. Security Aware
-- Dedicated security regression tests
-- Fraud detection scenarios
-- Edge case coverage
-- Type validation
-
----
-
 ## 📁 Project Structure
 
 ```
 auxilab-eval-harness/
 ├── src/auxilab_eval/
-│   ├── reporter/
-│   │   ├── templates/
-│   │   │   └── report.html.j2         ← Premium HTML template
-│   │   ├── charts.py
-│   │   ├── html.py
-│   │   └── store.py
-│   ├── evaluators/
-│   │   ├── base.py
-│   │   ├── exact.py
-│   │   ├── regex.py
-│   │   ├── json_schema.py
-│   │   ├── semantic.py
-│   │   └── llm_judge.py
-│   ├── runners/
-│   │   ├── base.py
-│   │   ├── python_runner.py
-│   │   ├── http_runner.py
-│   │   └── langgraph_runner.py
-│   ├── cli.py                          ← Rich CLI with colors
-│   ├── harness.py                      ← Core with CSV export
-│   ├── loader.py
-│   ├── schema.py
+│   ├── evaluators/          # exact, regex, json_schema, semantic, llm_judge
+│   ├── runners/             # python, http, langgraph
+│   ├── reporter/            # HTML template, charts, SQLite history store
+│   ├── cli.py               # Rich CLI with colors
+│   ├── harness.py           # Core orchestrator + CSV export
+│   ├── loader.py            # YAML/JSON loading
+│   ├── schema.py            # Pydantic test-case models
 │   └── _utils.py
-│
-├── demo/
-│   ├── ap_exception_agent.py
-│   ├── payment_run_agent.py
-│   ├── demo.py
-│   └── test_cases/
-│       ├── ap_exception_tests.yaml     ← 20 tests
-│       └── payment_run_tests.yaml      ← 18 tests
-│
-├── tests/
-│   ├── test_harness.py
-│   ├── test_evaluators.py
-│   ├── test_runners.py
-│   └── conftest.py
-│
-├── reports/                             ← Generated reports
-│   ├── ap_exception_report.html
-│   ├── ap_exception_results.csv
-│   ├── payment_run_report.html
-│   └── payment_run_results.csv
-│
-├── demo_all_features.py                ← Run this to see everything
+├── demo/                    # AP Exception + Payment Run agents + test cases
+├── tests/                   # Unit + integration tests
+├── reports/                 # Generated HTML/CSV reports
+├── demo_all_features.py     # Run this to see everything
 ├── pyproject.toml
 ├── requirements.txt
-└── README.md                            ← You are here
+└── README.md
 ```
 
 ---
@@ -531,91 +304,7 @@ auxilab-eval-harness/
 
 ---
 
-## 📚 Examples
-
-### Example 1: Run AP Exception Tests
-```bash
-python demo_all_features.py
-# or
-auxilab-eval run \
-  --tests demo/test_cases/ap_exception_tests.yaml \
-  --agent demo.ap_exception_agent:handle_ap_exception \
-  --html ap_report.html
-```
-
-**What Happens**:
-1. Loads 20 test cases from YAML
-2. Runs each test through your agent
-3. Evaluates results using mixed strategies
-4. Generates beautiful HTML report
-5. Displays summary in CLI with colors
-
-**Output**:
-```
-╔══════════════════════════════════════════╗
-║  Evaluation Complete                     ║
-╚══════════════════════════════════════════╝
-
-  Results:
-    ✓ Passed:      18/20
-    ✗ Failed:       2/20
-    Pass Rate:     🟡 90.0%
-    Avg Score:      0.89
-
-  Performance:
-    Avg Latency:  12.4 ms
-    Min Latency:  8.2 ms
-    Max Latency:  18.7 ms
-```
-
-### Example 2: Export to CSV
-```bash
-auxilab-eval run \
-  --tests demo/test_cases/payment_run_tests.yaml \
-  --agent demo.payment_run_agent:run_payment \
-  --csv payment_results.csv
-```
-
-**CSV Output** (opens in Excel):
-```
-Test ID,Description,Status,Score,Duration (ms),Failure Type
-pr_001,Happy path,PASS,1.00,12.3,
-pr_002,Early-pay discount,PASS,1.00,11.8,
-pr_003,Past-due high priority,PASS,1.00,13.2,
-pr_004,Watchlist hold,FAIL,0.65,14.5,Schema Violation
-```
-
-### Example 3: View History
-```bash
-export AUXILAB_EVAL_DB=~/.auxilab/history.db
-auxilab-eval history --limit 5
-```
-
----
-
-## 🎯 Key Features Explained
-
-### Interactive HTML Reports
-
-Open any generated HTML file in your browser to see:
-
-1. **Summary Section**: Pass/fail counts, overall pass rate
-2. **Performance Dashboard**: Charts showing latency, consistency
-3. **Search Bar**: Find tests by name or description
-4. **Status Filter**: Show all/passed/failed tests
-5. **Test Details**: Click any test to see full input/output/reasoning
-6. **Failure Analysis**: For failed tests, see what went wrong
-
-### Colorized CLI
-
-When you run tests, see:
-- 🟢 **Green**: Test passed (100% score)
-- 🟡 **Yellow**: Test passed with warnings (75-99%)
-- 🔴 **Red**: Test failed (<75%)
-- ✓ Pass indicators with checkmarks
-- ✗ Fail indicators with X marks
-- Emoji icons for easy scanning
-- Formatted tables and sections
+## 🎯 Evaluator Examples
 
 ### Multiple Evaluators
 
@@ -683,56 +372,13 @@ Includes specific tests for:
 
 ## 🚨 Troubleshooting
 
-### Installation Issues
-
-**Problem**: `ModuleNotFoundError: No module named 'auxilab_eval'`
-
-**Solution**:
-```bash
-pip install -e .
-```
-
-### Import Errors
-
-**Problem**: `ImportError: cannot import name 'EvalHarness'`
-
-**Solution**:
-```bash
-# Reinstall package
-pip install -e . --force-reinstall
-```
-
-### Missing Dependencies
-
-**Problem**: `No module named 'anthropic'` or similar
-
-**Solution**:
-```bash
-pip install -r requirements.txt
-```
-
-### CLI Not Found
-
-**Problem**: `command not found: auxilab-eval`
-
-**Solution**:
-```bash
-# Use Python module directly
-python -m auxilab_eval.cli run --help
-```
-
-### Report Generation Failed
-
-**Problem**: HTML report not creating
-
-**Solution**:
-```bash
-# Ensure Jinja2 is installed
-pip install jinja2 matplotlib
-
-# Try generating report manually
-python -c "from auxilab_eval.harness import EvalReport; print('OK')"
-```
+| Problem | Solution |
+|---|---|
+| `ModuleNotFoundError: No module named 'auxilab_eval'` | `pip install -e .` |
+| `ImportError: cannot import name 'EvalHarness'` | `pip install -e . --force-reinstall` |
+| `No module named 'anthropic'` (or similar) | `pip install -r requirements.txt` |
+| `command not found: auxilab-eval` | Use the module: `python -m auxilab_eval.cli run --help` |
+| HTML report not generating | `pip install jinja2 matplotlib` |
 
 ---
 
@@ -781,30 +427,6 @@ for result in report.test_results:
     if result.failure_info:
         print(f"  Failure: {result.failure_info.failure_type}")
 ```
-
----
-
-## 🎬 Complete Demo
-
-Run everything with one command:
-
-```bash
-python demo_all_features.py
-```
-
-This does:
-1. ✅ Runs 20 AP Exception tests
-2. ✅ Generates HTML report
-3. ✅ Exports to CSV
-4. ✅ Runs 18 Payment Run tests
-5. ✅ Generates HTML report
-6. ✅ Exports to CSV
-7. ✅ Shows run history
-8. ✅ Displays beautiful summary
-
-**Output Location**:
-- HTML Reports: `reports/ap_exception_report.html` and `reports/payment_run_report.html`
-- CSV Results: `reports/ap_exception_results.csv` and `reports/payment_run_results.csv`
 
 ---
 
@@ -924,173 +546,6 @@ A: Results cached in `~/.auxilab/history.db` with history tracking.
 
 ---
 
-## 🎯 Next Steps
-
-1. **Run the demo**: `python demo_all_features.py`
-2. **Open HTML report**: Check out the beautiful formatting
-3. **Review test cases**: Look at existing YAML test files
-4. **Create your tests**: Add tests for your agents
-5. **Run evaluations**: Use CLI commands to test
-6. **Check results**: View HTML, CSV, and CLI output
-
----
-
 ## 📄 License
 
 See [LICENSE](LICENSE) file for details.
-
----
-
-## 🏆 Ready to Go!
-
-Your evaluation harness is **production-ready** with:
-- ✅ 38 comprehensive tests
-- ✅ Professional reports
-- ✅ Rich analytics
-- ✅ Multiple export formats
-- ✅ Beautiful CLI
-- ✅ Complete documentation
-
-**Start now**:
-```bash
-python demo_all_features.py
-```
-
-**Questions?** Read this README or check individual test files for examples.
-
-**Good luck!** 🚀
-      field: decision
-    - type: llm_judge
-      rubric:
-        correctness: Did the agent correctly identify the duplicate?
-        clarity: Is the explanation clear and professional?
-      weights:
-        correctness: 0.7
-        clarity: 0.3
-```
-
-### 2. Wire your agent
-
-```python
-from auxilab_eval import EvalHarness, PythonRunner
-
-def my_agent(payload: dict) -> dict:
-    # ... your agent logic ...
-    return {"decision": "flag_duplicate", "reason": "matches INV-1001"}
-
-harness = EvalHarness(
-    runner=PythonRunner(my_agent),
-    test_cases="tests.yaml",
-)
-report = harness.run()
-report.to_html("report.html")
-print(f"Pass rate: {report.pass_rate:.0%}")
-```
-
-### 3. Run from the CLI
-
-```bash
-auxilab-eval run --tests tests.yaml --agent demo.my_agent --html report.html
-```
-
-### 4. Use in pytest
-
-```python
-# conftest.py
-pytest_plugins = ["auxilab_eval.pytest_plugin"]
-```
-
-```python
-# test_agent.py
-def test_ap_agent(eval_harness):
-    eval_harness.assert_passes("tests.yaml", agent=my_agent)
-```
-
----
-
-## Components
-
-| Component         | Purpose                                                    |
-| ----------------- | ---------------------------------------------------------- |
-| `schema`          | Pydantic models for test cases / rubrics                   |
-| `runners`         | `PythonRunner`, `LangGraphRunner`, `HttpRunner`            |
-| `evaluators`      | `exact`, `regex`, `json_schema`, `semantic`, `llm_judge`   |
-| `failure_analyser`| Claude-powered failure classification                      |
-| `reporter`        | HTML / Matplotlib / SQLite history                         |
-| `pytest_plugin`   | `eval_harness` fixture + `--auxilab-eval` flag             |
-
-### Built-in evaluators
-
-- **`exact`** — strict equality on a field
-- **`regex`** — pattern match
-- **`json_schema`** — validate against a JSON Schema
-- **`semantic`** — local sentence-transformers (`all-MiniLM-L6-v2`), no API key
-- **`llm_judge`** — Claude scores output against a per-criterion rubric and
-  returns a structured JSON score with rationale
-
-### Failure classifier
-
-When a test case fails, the harness asks Claude to bucket the failure into
-one of:
-
-- `Hallucination`
-- `Tool Call Error`
-- `Reasoning Error`
-- `Output Format Error`
-- `Incomplete Task`
-- `Unexpected Behaviour`
-
-…and returns a structured report with the raw output for inspection.
-
----
-
-## Demo
-
-A full demo against a mock **AP Exception Handling Agent** lives under
-[demo/](demo/):
-
-```bash
-python demo/demo.py                # CLI demo
-python demo/demo.py --gradio       # interactive Gradio UI
-```
-
-10 ready-made YAML test cases live in
-[demo/test_cases/ap_exception_tests.yaml](demo/test_cases/ap_exception_tests.yaml).
-
----
-
-## Project structure
-
-```
-auxilab-eval-harness/
-├── src/auxilab_eval/
-│   ├── schema.py          # Pydantic test-case models
-│   ├── loader.py          # YAML/JSON loading
-│   ├── harness.py         # Orchestrator
-│   ├── runners/           # Agent adapters
-│   ├── evaluators/        # Eval strategies
-│   ├── failure_analyser.py
-│   ├── reporter/          # HTML / charts / SQLite
-│   ├── pytest_plugin.py
-│   └── cli.py
-├── demo/                  # AP Exception Agent + 10 cases + Gradio UI
-├── tests/                 # Unit + integration tests
-└── pyproject.toml
-```
-
----
-
-## Development
-
-```bash
-pip install -e ".[dev]"
-pytest                              # run unit tests
-python demo/demo.py                 # run end-to-end demo
-auxilab-eval --help                 # CLI
-```
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE).
