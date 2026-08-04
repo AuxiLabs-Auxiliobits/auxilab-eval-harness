@@ -549,3 +549,15 @@ A: Results cached in `~/.auxilab/history.db` with history tracking.
 ## 📄 License
 
 See [LICENSE](LICENSE) file for details.
+
+
+---
+
+## Built By
+
+| Name | GitHub |
+|------|--------|
+| Shubham Negi | [@shubhamnegi-ux](https://github.com/shubhamnegi-ux) |
+| Nikhil Verma | [@vermaniks](https://github.com/vermaniks) |
+
+Built during the **AuxiLab Founding Hackathon** by [Auxiliobits Technologies](https://auxiliobits.com) · [AuxiLab Catalogue](https://auxiliobits.com/auxilab)
