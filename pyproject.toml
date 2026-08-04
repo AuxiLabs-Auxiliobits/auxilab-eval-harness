@@ -1,26 +1,70 @@
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
-name = "auxilab-eval-harness"
+name = "auxilab-eval"
 version = "0.1.0"
-description = "Developer Tool · Framework-agnostic evaluation harness for testing agentic AI workflows locally"
+description = "A lightweight, framework-agnostic test harness for agentic AI workflows."
 readme = "README.md"
-license = { file = "LICENSE" }
-requires-python = ">=3.10"
-keywords = ["agentic-ai", "mcp", "finance", "ap-automation", "auxiliobits"]
+license = { text = "MIT" }
+requires-python = ">=3.9"
+authors = [{ name = "AuxiLabs / Auxiliobits" }]
+keywords = ["agents", "evaluation", "testing", "llm", "anthropic", "claude"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
 ]
+dependencies = [
+    "pydantic>=2.0",
+    "PyYAML>=6.0",
+    "jsonschema>=4.0",
+    "anthropic>=0.34.0",
+    "matplotlib>=3.7",
+    "requests>=2.28",
+    "jinja2>=3.1",
+    "python-dotenv>=1.0",
+    "click>=8.1",
+]
+
+[project.optional-dependencies]
+semantic = ["sentence-transformers>=2.2"]
+gradio = ["gradio>=4.0"]
+langgraph = ["langgraph>=0.2"]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1",
+]
+all = [
+    "sentence-transformers>=2.2",
+    "gradio>=4.0",
+    "langgraph>=0.2",
+]
+
+[project.scripts]
+auxilab-eval = "auxilab_eval.cli:main"
+
+[project.entry-points."pytest11"]
+auxilab_eval = "auxilab_eval.pytest_plugin"
 
 [project.urls]
 Homepage = "https://github.com/AuxiLabs-Auxiliobits/auxilab-eval-harness"
-Organisation = "https://github.com/AuxiLabs-Auxiliobits"
-Website = "https://auxiliobits.com/auxilab"
+Repository = "https://github.com/AuxiLabs-Auxiliobits/auxilab-eval-harness"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+auxilab_eval = ["reporter/templates/*.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
