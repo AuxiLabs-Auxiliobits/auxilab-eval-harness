@@ -515,7 +515,7 @@ if report.pass_rate < 0.9:
 ## 🎬 Demo Video
 
 > **Watch the 3-minute end-to-end demo:**
-> 🔗 [https://drive.google.com/drive/folders/1Pl8t-bwD3HcQUp2qd5AZBLtiApMf1384](https://drive.google.com/drive/folders/1Pl8t-bwD3HcQUp2qd5AZBLtiApMf1384)
+> 🔗 [https://drive.google.com/drive/folders/1-v4BxMXI0KfoaAIEKWup_gTFTKIyJQYl](https://drive.google.com/drive/folders/1-v4BxMXI0KfoaAIEKWup_gTFTKIyJQYl)
 
 The video covers:
 1. Installing the harness with `pip install -e .`
